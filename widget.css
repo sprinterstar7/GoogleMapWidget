@@ -1,0 +1,138 @@
+.infoBox{
+  position:relative;
+  padding:15px;
+  margin:1em 0 3em;
+  color:#fff;
+  background:#075698; /* default background for browsers without gradient support */
+  /* css3 */
+  background:-webkit-gradient(linear, 0 0, 0 100%, from(#2e88c4), to(#075698));
+  background:-moz-linear-gradient(#2e88c4, #075698);
+  background:-o-linear-gradient(#2e88c4, #075698);
+  background:linear-gradient(#2e88c4, #075698);
+  -webkit-border-radius:10px;
+  -moz-border-radius:10px;
+  border-radius:10px;
+  font-size:13px;
+}
+
+/*KML Button Changes*/
+
+
+#KMLLayerButtonGroup ul {
+    list-style: none;
+    margin: 5px;
+    width: 200px;
+}
+
+#KMLLayerButtonGroup ul li {
+    border: 1px solid black;
+    padding: 3px;
+    padding-right: 10px;
+    padding-left: 15px;
+    background: rgb(128, 130, 133);
+    text-align: center;
+}
+
+#KMLLayerButtonGroup ul li a {
+    color:  rgb(188, 189, 192);
+    text-decoration: none;
+}
+
+#KMLLayerButtonGroup ul li a:hover {
+    color: rgb(255, 255, 255);
+    transition: .25s;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#KMLLayerButtonGroupHide {
+    border: 1px solid black;
+    padding: 2px;
+    padding-top: 5px;
+    background: rgb(128, 130, 133);
+    color:  rgb(188, 189, 192);
+    text-align: center;
+}
+
+#KMLLayerButtonGroupHide:hover {
+    color: rgb(255, 255, 255);
+    transition: .25s;
+    cursor: pointer;
+}
+
+/* Map Sidebar */
+
+#mapSidebar {
+    
+    z-index: 1000;
+    position: absolute;
+    width: 330px;
+    border-left: 1px solid lightgrey;
+    border-bottom: 1px solid lightgrey;
+}
+
+#mapSidebarHide {
+    position: absolute;
+    width: 25px;
+    height: 50px;
+    left: 300px;
+    top: 50px;
+    background: rgb(182, 184, 186);
+    color: #888;
+    cursor: pointer;
+}
+
+#mapSidebarShow {
+    position: absolute;
+    width: 25px;
+    height: 50px;
+    left: 0px;
+    top: 50px;
+    background: rgb(182, 184, 186);
+    color: #888;
+    cursor: pointer;
+}
+
+#mapSidebarHide:hover, #mapSidebarShow:hover {
+    color: rgb(255, 255, 255);
+    transition: .25s;
+}
+
+#mapSidebarHide i {
+    margin-top: 18px;
+    font-size: 20px;
+    margin-left: 7px;
+}
+
+#mapSidebarShow i {
+    margin-top: 18px;
+    font-size: 20px;
+    margin-left: 9px;
+}
+
+
+#mapSidebarContent {
+    width: 300px;
+    background:rgb(128, 129, 133);
+    -webkit-box-shadow: 10px 0 5px -2px #111;
+        box-shadow: 10px 0 5px -2px #111;
+}
+
+#mapSidebarHeader{
+    height: 50px;
+    width: 300px;
+    background: rgb(252, 156, 70);
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+    padding-left: 25px;
+    padding-top: 10px;
+    font-weight: bold;
+}
+
+#mapSidebarInfo { 
+    margin: 10px;
+    overflow-y: auto;
+    color: white;
+    background: rgb(152, 154, 156);
+    font-size: 16px;
+}
