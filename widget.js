@@ -51,6 +51,14 @@ prism.registerWidget("googleMaps", {
 				}
 			},
 			{
+				name : 'shape',
+				type : 'series',
+				metadata : {
+					types : ['dimensions'],
+					maxitems : 1
+				}
+			},
+			{
 				name : 'details',
 				type : 'visible',
 				metadata : {
@@ -72,6 +80,10 @@ prism.registerWidget("googleMaps", {
 		canColor: function (widget, panel, item) {
             return panel.name === "color";
         },
+
+		canShape: function (widget, panel, item) {
+            return panel.name === "shape";
+        },
 		
 		allocatePanel : function (widget, metadataItem) {
 			// measure
@@ -84,6 +96,12 @@ prism.registerWidget("googleMaps", {
 			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("color").items.length === 0) {
 
 				return "color";
+			}
+
+			// shape by
+			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("shape").items.length === 0) {
+
+				return "shape";
 			}
 			
 			// details
@@ -127,6 +145,7 @@ prism.registerWidget("googleMaps", {
 			widget.metadata.panel("latlng").push(a.dimensions);
 			widget.metadata.panel("value").push(a.measures);
 			widget.metadata.panel("color").push(a.color);
+			widget.metadata.panel("shape").push(a.shape);
 			widget.metadata.panel("details").push(a.details);
 			widget.metadata.panel("filters").push(a.filters);
 		},
@@ -174,6 +193,12 @@ prism.registerWidget("googleMaps", {
 			var colorPanel = widget.metadata.panel("color");
 			if (colorPanel && colorPanel.items.length > 0) {
 				query.metadata.push(colorPanel.items[0])
+			}
+
+			// pushing shape
+			var shapePanel = widget.metadata.panel("shape");
+			if (shapePanel && shapePanel.items.length > 0) {
+				query.metadata.push(shapePanel.items[0])
 			}
 			
 			// pushing details
@@ -492,6 +517,13 @@ prism.registerWidget("googleMaps", {
 								var parts = x.toString().split(".");
 								return parts[0].replace(/\B(?=(\d{3})+(?=$))/g, ",") + (parts[1] ? "." + parts[1] : "");
 							};
+							
+							function createColoredShapeMarker(shape, color) {
+
+							  var base = location.host.replace(":8081", "");
+							  var url = "/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + color;
+							  return base + url;
+							}
 
 							
 							function createMarker(radius, color) {
@@ -525,6 +557,7 @@ prism.registerWidget("googleMaps", {
 							  return canvas.toDataURL();
 
 							}
+
 							var testMarker = createMarker(10, "#00A0DC");
 							
 							// initialize map & map options
@@ -683,24 +716,33 @@ prism.registerWidget("googleMaps", {
 							}
 							
 							//Map Side Bar Begin
+
 							$(map.getDiv()).append($('<div id="mapSidebar">'
-								+ '<div id="mapSidebarHide" title="Hide Shaping Functionality"><i class="fa fa-caret-left"></i></div>'
+								+ '<div id="mapSidebarHide"><i class="fa fa-caret-left"></i></div>'
 								+ '<div id="mapSidebarContent"></div>'
 								+ '</div>'));
 							$('#mapSidebar').css('left', 0);
 							$('#mapSidebar').css('top', 0);
 							$('#mapSidebar').hide();
 
-							$(map.getDiv()).append($('<div id="mapSidebarShow" title="Show Shaping Functionality"><i class="fa fa-caret-right"></i></div>'));
+							$(map.getDiv()).append($('<div id="mapSidebarShow"><i class="fa fa-caret-right"></i></div>'));
 
 							$('#mapSidebarContent').height($(map.getDiv()).height());
-							$('#mapSidebarContent').append($('<div id="mapSidebarHeader">Color Legend</div>'))
-							$('#mapSidebarContent').append($('<div id="mapSidebarInfo"></div>'))
+							$('#mapSidebarContent').append($('<div id="mapSidebarHeader">'
+								+ '<span class="active" id="colorLegend">Color Legend</span>'
+								+ '<span class="tabDivider"></span>'
+								+ '<span class="inactive" id="shapeLegend">Shape by</span>'
+							+ '</div>'));
+							$('#mapSidebarContent').append($('<div id="mapColorLegendContent">some color legend stuff</div>'));
+							$('#mapSidebarContent').append($('<div id="mapShapeLegendContent">lorem ipsum blah blah blah</div>'));
 
-							$('#mapSidebarInfo').append($('<table id="mapSidebarTable"><tbody></tbody></table>'))
-							createSidebarTableHeader(2, ['Color', 'Description']);
+							$('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody></tbody></table>'));
+							$('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody></tbody></table>'));
 
-							$('#mapSidebarInfo').height($(map.getDiv()).height() - 70);
+							$('#mapColorLegendContent').height($(map.getDiv()).height() - 70);
+							$('#mapShapeLegendContent').height($(map.getDiv()).height() - 70);
+
+							$('#mapShapeLegendContent').hide();
 
 							$('#mapSidebarHide').click(function () {
 								$('#mapSidebar').hide("slide", { direction: "left" }, 200);
@@ -711,6 +753,21 @@ prism.registerWidget("googleMaps", {
 								$("#mapSidebarShow").hide();
 								$('#mapSidebar').show("slide", { direction: "left" }, 200);
 							});
+
+							$('#colorLegend').click(function () {
+								$('#colorLegend').addClass('active').removeClass('inactive');
+								$('#shapeLegend').addClass('inactive').removeClass('active');
+								$('#mapShapeLegendContent').hide();
+								$('#mapColorLegendContent').show();
+							});
+
+							$('#shapeLegend').click(function () {
+								$('#shapeLegend').addClass('active').removeClass('inactive');
+								$('#colorLegend').addClass('inactive').removeClass('active');
+								$('#mapColorLegendContent').hide();
+								$('#mapShapeLegendContent').show();
+							});   
+
 							//Map Side Bar End
 							
 							// Draw Manager
@@ -765,72 +822,6 @@ prism.registerWidget("googleMaps", {
 								}
 							});
 							_drawManager.setMap(map);
-
-							google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
-                                    if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
-                                        var latFieldName = "Latitude",
-                                            lngFieldName = "Longitude",
-                                            filterFields = e.widget.metadata.panel("filters").items,
-                                            bounds = event.overlay.bounds;
-
-                                        var latField = getFieldFromItems(latFieldName, filterFields),
-                                            lngField = getFieldFromItems(lngFieldName, filterFields);
-
-                                        if (!latField) {
-                                            latField = createFieldToFilterPanel(latFieldName);
-                                            filterFields.push(latField);
-                                        }
-
-                                        if (!lngField) {
-                                            lngField = createFieldToFilterPanel(lngFieldName);
-                                            filterFields.push(lngField);
-                                        }
-                                        
-                                        addRectangleToFilter(latField, bounds.f.f, bounds.f.b);
-                                        addRectangleToFilter(lngField, bounds.b.b, bounds.b.f);
-
-                                        e.widget.refresh();
-                                    }
-                                });
-
-                                function addRectangleToFilter(field,from,to){
-                                    field.jaql.filter.or.push({
-                                        "and": [
-                                            {
-                                                "fromNotEqual": from
-                                            },
-                                            {
-                                                "toNotEqual": to
-                                            }
-                                        ]
-                                    });
-                                }
-
-                                function getFieldFromItems(field,items){
-                                    return _.find(items,function(item){
-                                        if(item.jaql.dim &&
-                                            ((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
-                                            return item;
-                                        }
-                                    });
-                                }
-
-                                function createFieldToFilterPanel(fieldName){
-                                    return {
-                                        "jaql": {
-                                            "table": "Well",
-                                            "column": fieldName,
-                                            "dim": "[Well." + fieldName + "]",
-                                            "datatype": "numeric",
-                                            "title": fieldName,
-                                            "filter": {
-                                                "or": []
-                                            }
-                                        },
-                                        "collapsed": false
-                                    };
-                                }
-							
 							
 							//	Define bounding object (for auto zoom/center)
 							var bounds = new google.maps.LatLngBounds();
@@ -891,6 +882,12 @@ prism.registerWidget("googleMaps", {
 										colors[pinColor] = createMarker(10, pinColor);
 								}
 
+								var shape = "";
+								var shapeUrl = "";
+								if ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].shape)) {
+									shape = qresult[i][4].shape;//.replace("#","");
+									var shapeUrl = createColoredShapeMarker(shape, pinColor);
+								}
 								//	Create the marker image and shadow
 								/*var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
 									new google.maps.Size(21, 34),
@@ -902,13 +899,29 @@ prism.registerWidget("googleMaps", {
 									new google.maps.Point(12, 35));*/
 
 								// Create the marker
-								var marker = new google.maps.Marker({
-									map : map,
-									position : new google.maps.LatLng(lat, lng),
-									raiseOnDrag : false,
-									visible : true,
-									draggable : false,
-									icon : colors[pinColor],//testMarker,//pinImage,
+								if(shape){
+									var marker = new google.maps.Marker({
+										map : map,
+										position : new google.maps.LatLng(lat, lng),
+										raiseOnDrag : false,
+										visible : true,
+										draggable : false,
+										icon: {
+											url: shapeUrl,
+											anchor: new google.maps.Point(10, 10)
+										},
+										title : qresult[i][measureIndex]["text"], // the formatted value of each marker
+										value : qresult[i][measureIndex]["data"] // the value of each marker
+									});
+								}
+								else {
+									var marker = new google.maps.Marker({
+										map : map,
+										position : new google.maps.LatLng(lat, lng),
+										raiseOnDrag : false,
+										visible : true,
+										draggable : false,
+										icon : colors[pinColor],//testMarker,//pinImage,
 									//icon: {
 										/*url: protocol + externalPaths.images.pinColor + pinColor,
 										size: new google.maps.Size(21, 34),
@@ -928,9 +941,10 @@ prism.registerWidget("googleMaps", {
 										origin: new google.maps.Point(0,0),
 										anchor: new google.maps.Point(12, 35)
 									},*/
-									title : qresult[i][measureIndex]["text"], // the formatted value of each marker
-									value : qresult[i][measureIndex]["data"] // the value of each marker
-								});
+										title : qresult[i][measureIndex]["text"], // the formatted value of each marker
+										value : qresult[i][measureIndex]["data"] // the value of each marker
+									});
+								}
 								
 								//	Add data to the marker
 								marker.sisenseTooltip = markerText;
@@ -1042,6 +1056,11 @@ prism.registerWidget("googleMaps", {
 								}
 							});
 
+							// KML Piece
+							var _presentKMLLayers = [];
+							var _layersClickedOnce = [];
+							var _layerRetries = 0;
+
 							// Create Sidebar rows, tables
 
 							function createSidebarTableHeader(tableId, numCols, headers) {
@@ -1075,11 +1094,6 @@ prism.registerWidget("googleMaps", {
 							}
 
 							// End Sidebar functionality
-						
-							// KML Piece
-							var _presentKMLLayers = [];
-							var _layersClickedOnce = [];
-							var _layerRetries = 0;
 
 							function setKMLLayer(kmlId) {
 								//All US Rail Networks
