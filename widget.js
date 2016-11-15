@@ -225,11 +225,11 @@ prism.registerWidget("googleMaps", {
 				data: JSON.stringify(testQuery),
 				success: function(data) {
 					var result = data.values[0];
-					
-					if (result.length === undefined)
-						console.log('Total Rows: ' + result.data);
-					else
-						console.log('Total Rows: ' + result[0].data);
+					var count = (result.length === undefined) ? result.data : result[0].data;
+
+					if (count > query.count) {
+						console.log(count);
+					}
 				},
 				dataType: 'json',
 				async: false
