@@ -766,71 +766,86 @@ prism.registerWidget("googleMaps", {
 							});
 							_drawManager.setMap(map);
 
-							google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
-                                    if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
-                                        var latFieldName = "Latitude",
-                                            lngFieldName = "Longitude",
-                                            filterFields = e.widget.metadata.panel("filters").items,
-                                            bounds = event.overlay.bounds;
+								google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
+									updateDashboardFilters(event);
+								});
 
-                                        var latField = getFieldFromItems(latFieldName, filterFields),
-                                            lngField = getFieldFromItems(lngFieldName, filterFields);
+								function updateDashboardFilters(event){
+									if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
+										var latFieldName = "Latitude",
+											lngFieldName = "Longitude",
+											filterFields = prism.activeDashboard.filters.$$items,
+											bounds = event.overlay.bounds;
 
-                                        if (!latField) {
-                                            latField = createFieldToFilterPanel(latFieldName);
-                                            filterFields.push(latField);
-                                        }
 
-                                        if (!lngField) {
-                                            lngField = createFieldToFilterPanel(lngFieldName);
-                                            filterFields.push(lngField);
-                                        }
-                                        
-                                        addRectangleToFilter(latField, bounds.f.f, bounds.f.b);
-                                        addRectangleToFilter(lngField, bounds.b.b, bounds.b.f);
+										createDashFilter(latFieldName,filterFields,bounds.f.f, bounds.f.b);
+										createDashFilter(lngFieldName,filterFields,bounds.b.b, bounds.b.f);
 
-                                        e.widget.refresh();
-                                    }
-                                });
+										//  Make sure the widgets get refreshed
+										var refreshDashboard = function(){
+											$.each(prism.activeDashboard.widgets.$$widgets,function(){
+												this.refresh();
+											})
+										};
 
-                                function addRectangleToFilter(field,from,to){
-                                    field.jaql.filter.or.push({
-                                        "and": [
-                                            {
-                                                "fromNotEqual": from
-                                            },
-                                            {
-                                                "toNotEqual": to
-                                            }
-                                        ]
-                                    });
-                                }
+										setTimeout(refreshDashboard,500);
+									}
+								}
 
-                                function getFieldFromItems(field,items){
-                                    return _.find(items,function(item){
-                                        if(item.jaql.dim &&
-                                            ((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
-                                            return item;
-                                        }
-                                    });
-                                }
+								function createDashFilter(name,filterFields,from,to){
+									var field = getFieldFromItems(name, filterFields);
 
-                                function createFieldToFilterPanel(fieldName){
-                                    return {
-                                        "jaql": {
-                                            "table": "Well",
-                                            "column": fieldName,
-                                            "dim": "[Well." + fieldName + "]",
-                                            "datatype": "numeric",
-                                            "title": fieldName,
-                                            "filter": {
-                                                "or": []
-                                            }
-                                        },
-                                        "collapsed": false
-                                    };
-                                }
-							
+									if (!field) {
+										field = createFieldToFilterPanel(name);
+									}
+
+									addRectangleToFilter(field, from, to);
+
+									var options = {
+										save: false,
+										refresh: false
+									};
+
+									//  Set via JavaScript API
+									prism.activeDashboard.filters.update(field,options);
+								}
+
+								function addRectangleToFilter(field,from,to){
+									field.jaql.filter.or.push({
+										"and": [
+											{
+												"fromNotEqual": from
+											},
+											{
+												"toNotEqual": to
+											}
+										]
+									});
+								}
+
+								function getFieldFromItems(field,items){
+									return _.find(items,function(item){
+										if($$get(item,"jaql.dim") &&
+											((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
+											return item;
+										}
+									});
+								}
+
+								function createFieldToFilterPanel(fieldName){
+									return {
+										"jaql": {
+											"table": "Well",
+											"column": fieldName,
+											"dim": "[Well." + fieldName + "]",
+											"datatype": "numeric",
+											"title": fieldName,
+											"filter": {
+												"or": []
+											}
+										}
+									};
+								}
 							
 							//	Define bounding object (for auto zoom/center)
 							var bounds = new google.maps.LatLngBounds();
