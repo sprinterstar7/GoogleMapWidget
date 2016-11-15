@@ -52,7 +52,7 @@ prism.registerWidget("googleMaps", {
 			},
 			{
 				name : 'shape',
-				type : 'series',
+				type : 'visible',
 				metadata : {
 					types : ['dimensions'],
 					maxitems : 1
@@ -511,7 +511,10 @@ prism.registerWidget("googleMaps", {
 							//	All 3 scripts loaded, Get the data
 							var qresult = s.queryResult.$$rows; // results
 							var headers = s.rawQueryResult.headers; // headers
-							
+							var shapeCategory;
+							if(e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) { 
+								shapeCategory = e.widget.metadata.panel('shape').items[0].jaql.column;
+							}
 							//	Define function to format numbers w/ commas
 							function formatWithCommas(x) {
 								var parts = x.toString().split(".");
@@ -714,6 +717,131 @@ prism.registerWidget("googleMaps", {
 									_countyLabels.push(mapLabel);
 								};
 							}
+
+							var availableShapes = [
+								'square'
+								,'diamond'
+								,'circle'
+								,'triangle-up'
+								,'triangle-down'
+								,'triangle-left'
+								,'triangle-right'
+								,'pentagon'
+								,'hexagon'
+								,'star'
+								,'three-point-star'
+								,'four-point-star'
+								,'gear'
+								,'x-shape'
+								,'plus'
+								,'arrow-up'
+								,'arrow-down'
+								,'arrow-left'
+								,'arrow-right'
+								,'bar-horizontal'
+								,'bar-vertical'
+							];
+
+							function addRowsToShapeBy(arr) { 
+								var shapeColumn = _.find(shapesMetadata, function(category){
+									return category.column == shapeCategory;
+								});
+								
+								_.each(arr, function(row){
+									var shape = "circle";
+									if(shapeColumn && shapeColumn.items) { 
+										var item = _.find(shapeColumn.items, function(item) { 
+											return item.value == row;
+										});
+										if(item) { 
+											shape = item.shape;
+										}
+									}
+									$('#mapSidebarShapeTable tbody').append($("<tr id='shapeRow"+row+"' class='shapeLegendRow'>"
+										+"<td class='shapeLegendDescription'><span>"+row+"</span></td>"
+										+"<td class='shapeLegendImg'><img src='../Resources/shapes/"+shape+".png'/></td>"
+									+"</tr>"));
+									var selector;
+									if (typeof row === 'string' || row instanceof String) { 
+										selector = row.replace("\\", "\\\\")
+									}
+									else { 
+										selector = row;
+									}
+									$('#shapeRow'+selector+' td.shapeLegendImg img').click(function() {
+										console.log(row);
+										openShapeSelection(row);
+									});
+								});
+							}
+
+							function openShapeSelection(row) { 
+								var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
+								$('#mapShapeLegendContent').append($(htmlString));
+
+								_.each(availableShapes, function(shape) {
+									var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
+														+ '<img src="../Resources/shapes/'+shape+'.png"'
+														+ 'title="'+shape+'"/>'
+														'</div>'
+									$('#shapeSelectionWindow #shapeSelectionContent').append(shapeString);
+
+									$('#shapeSelectionWindow div #'+shape).click(function(){
+										changeShapeOfCategory(row, shape);
+										$('#shapeSelectionWindow').remove();
+									});
+								});
+							}
+
+							function changeShapeOfCategory(data, shape) { 
+								_.each(markers, function(marker){
+									if(marker.shape === data) { 
+										marker.marker.icon = 
+										{
+											url: "http://qavm.eastus2.cloudapp.azure.com/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + marker.color.replace('#', ''),
+											anchor: new google.maps.Point(10, 10)
+                						};
+										marker.marker.setMap(null);
+										marker.marker.setMap(map);
+									}
+								});
+								var selector;
+								if (typeof data === 'string' || data instanceof String) { 
+									selector = data.replace("\\", "\\\\")
+								}
+								else { 
+									selector = data;
+								}
+								$('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '../Resources/shapes/'+shape+'.png');
+								var shapeMetadataColumn = _.find(shapesMetadata, function(category){
+									return category.column == shapeCategory;
+								});
+								if(shapeMetadataColumn) {
+									var item = _.find(shapeMetadataColumn.items, function(item){
+										return item.value == data;
+									});
+									if(item && item.shape) { 
+										item.shape = shape;
+									}
+									else { 
+										shapeMetadataColumn.items.push({
+											value : data,
+											shape: shape
+										})
+									}
+								}
+								else { 
+									shapesMetadata.push({
+										column : shapeCategory,
+										items : [{
+											value : data,
+											shape: shape
+										}] 
+									})
+								}
+								e.widget.queryMetadata.savedShapes = shapesMetadata;
+								e.widget.changesMade();
+							}
 							
 							//Map Side Bar Begin
 
@@ -734,10 +862,11 @@ prism.registerWidget("googleMaps", {
 								+ '<span class="inactive" id="shapeLegend">Shape by</span>'
 							+ '</div>'));
 							$('#mapSidebarContent').append($('<div id="mapColorLegendContent">some color legend stuff</div>'));
-							$('#mapSidebarContent').append($('<div id="mapShapeLegendContent">lorem ipsum blah blah blah</div>'));
+							$('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
 
 							$('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody></tbody></table>'));
-							$('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody></tbody></table>'));
+							$('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th>'+ (shapeCategory ? shapeCategory : "No Results") 
+								+'</th><th></th><tr></tbody></table>'));
 
 							$('#mapColorLegendContent').height($(map.getDiv()).height() - 70);
 							$('#mapShapeLegendContent').height($(map.getDiv()).height() - 70);
@@ -838,6 +967,15 @@ prism.registerWidget("googleMaps", {
 							//var infowindow = new google.maps.InfoWindow();
 
 							//	Init Variables
+							var shapesMetadata = [];
+							var savedShapesCategory; 
+
+							var shapeArray = _.map(qresult, function(item){
+								return item[4] && item[4].data ? item[4].data : null;
+							});
+							shapeArray = _.uniq(shapeArray);
+							shapeArray = _.compact(shapeArray);
+
 							var i = 0,
 								dataSize = qresult.length,
 								j,
@@ -846,7 +984,15 @@ prism.registerWidget("googleMaps", {
 								markerText,
 								clusterLabel = '',
 								colors = { "#00A0DC": testMarker };
-											
+
+							if(e.widget.queryMetadata.savedShapes) {
+								shapesMetadata = e.widget.queryMetadata.savedShapes;
+							};
+							if(shapesMetadata) { 
+								savedShapesCategory = _.find(shapesMetadata, function(category){
+									return category.column == shapeCategory;
+								})
+							}
 							//	Create each marker for the map
 							for (; i < dataSize; i++) {
 							
@@ -882,12 +1028,16 @@ prism.registerWidget("googleMaps", {
 										colors[pinColor] = createMarker(10, pinColor);
 								}
 
-								var shape = "";
-								var shapeUrl = "";
-								if ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].shape)) {
-									shape = qresult[i][4].shape;//.replace("#","");
-									var shapeUrl = createColoredShapeMarker(shape, pinColor);
+								var shape = "circle";
+								if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
+									var item = _.find(savedShapesCategory.items, function(item) { 
+										return item.value == qresult[i][4].data;
+									});
+									if(item) { 
+										shape = item.shape;
+									}
 								}
+
 								//	Create the marker image and shadow
 								/*var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
 									new google.maps.Size(21, 34),
@@ -899,48 +1049,30 @@ prism.registerWidget("googleMaps", {
 									new google.maps.Point(12, 35));*/
 
 								// Create the marker
-								if(shape){
-									var marker = new google.maps.Marker({
+								var marker; 
+								if(shapeCategory) { 
+									marker = new google.maps.Marker({
 										map : map,
 										position : new google.maps.LatLng(lat, lng),
 										raiseOnDrag : false,
 										visible : true,
 										draggable : false,
 										icon: {
-											url: shapeUrl,
+											url: "http://qavm.eastus2.cloudapp.azure.com/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
 											anchor: new google.maps.Point(10, 10)
-										},
+                						},
 										title : qresult[i][measureIndex]["text"], // the formatted value of each marker
 										value : qresult[i][measureIndex]["data"] // the value of each marker
 									});
 								}
-								else {
-									var marker = new google.maps.Marker({
+								else { 
+									marker = new google.maps.Marker({
 										map : map,
 										position : new google.maps.LatLng(lat, lng),
 										raiseOnDrag : false,
 										visible : true,
 										draggable : false,
-										icon : colors[pinColor],//testMarker,//pinImage,
-									//icon: {
-										/*url: protocol + externalPaths.images.pinColor + pinColor,
-										size: new google.maps.Size(21, 34),
-										origin: new google.maps.Point(0,0),
-										anchor: new google.maps.Point(10, 34)
-										/*path: google.maps.SymbolPath.CIRCLE,
-										scale: 8,
-										fillColor: "#FF0000",
-										strokeColor: "#000000",
-										strokeWeight: 0.5,
-										fillOpacity: 1*/
-									//},
-									//shadow: pinShadow,
-									/*shadow: {
-										url: protocol + externalPaths.images.pinShadow,
-										size: new google.maps.Size(40, 37),
-										origin: new google.maps.Point(0,0),
-										anchor: new google.maps.Point(12, 35)
-									},*/
+										icon : colors[pinColor],
 										title : qresult[i][measureIndex]["text"], // the formatted value of each marker
 										value : qresult[i][measureIndex]["data"] // the value of each marker
 									});
@@ -958,7 +1090,60 @@ prism.registerWidget("googleMaps", {
 								//	Add the marker to the array of all markers
 								//markers.push(marker);
 								//console.log(i);
+
+								markers.push({
+									marker : marker, 
+									color: pinColor,
+									shape : (qresult[i][4] && qresult[i][4].data) ? qresult[i][4].data : null
+								});
+
+								
+
+								if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
+									var item = _.find(savedShapesCategory.items, function(item){
+										return item.value == data;
+									});
+									if(item && item.shape) { 
+										item.shape = shape;
+									}
+									else { 
+										savedShapesCategory.items.push({
+											value : qresult[i][4].data,
+											shape: "circle"
+										})
+									}
+								}
+								else if (shapeCategory && qresult[i][4] && qresult[i][4].data) { 
+									var cat = {
+										column : shapeCategory,
+										items : [{
+											value : qresult[i][4].data,
+											shape: "circle"
+										}] 
+									}
+									shapesMetadata.push(cat);
+									savedShapesCategory = cat;
+								}
 							}
+							e.widget.queryMetadata.savedShapes = shapesMetadata;
+							e.widget.changesMade();
+
+							if(shapeArray) { 
+								addRowsToShapeBy(shapeArray);
+							}	
+
+							// USE FOR POSSIBLY SAVING THE ARRAY OF SHAPES-----------------------------
+							// widget.changesMade();
+							// pushing data
+							//if (widget.queryMetadata) query.metadata.push(widget.queryMetadata);
+							// else {
+							// query.metadata.push({"zoom": 4,
+							// "neLat": 53.51418466756816,
+							// "neLong": -65.47851600000001,
+							// "swLat": 16.172473045501924,
+							// "swLong": -125.94726600000001
+							// });
+							// }/ ---------------------------------------------------------------------
 							
 							//Add event listeners to each marker, to popup the info window
 							/*oms.addListener('click', function(marker, event) {		
@@ -1010,19 +1195,21 @@ prism.registerWidget("googleMaps", {
 								infowindow.close();
 							};*/
 							
-							google.maps.event.addListener(map, 'bounds_changed', function() {
-								var bounds = map.getBounds();
-								var NE = bounds.getNorthEast();
-								var SW = bounds.getSouthWest();
-								var zoom = map.getZoom();
-								e.widget.queryMetadata = {
-									"zoom": zoom,
-									"neLat": NE.lat(),
-									"neLong": NE.lng(),
-									"swLat": SW.lat(),
-									"swLong": SW.lng()
-								};
-							});
+							// google.maps.event.addListener(map, 'bounds_changed', function() {
+                            //     var bounds = map.getBounds();
+                            //     var NE = bounds.getNorthEast();
+                            //     var SW = bounds.getSouthWest();
+                            //     var zoom = map.getZoom();
+                            //     e.widget.queryMetadata = {
+                            //         "zoom": zoom,
+                            //         "neLat": NE.lat(),
+                            //         "neLong": NE.lng(),
+                            //         "swLat": SW.lat(),
+                            //         "swLong": SW.lng(),
+							// 		"savedShapes" : e.widget.queryMetadata.savedShapes
+                            //     };
+							// 	e.widget.changesMade();
+                            // });
 							
 							google.maps.event.addListener(map, 'zoom_changed', function() {
 								switch(map.getZoom()) {
