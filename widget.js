@@ -151,6 +151,26 @@ prism.registerWidget("googleMaps", {
 			query.count = 25000;//0;
 			query.offset = 0;
 
+			var testQuery = {
+				datasource : widget.datasource,
+				metadata : []
+			};
+			testQuery.metadata.push({
+				"jaql": {
+					"formula":"COUNT(Id)",
+					"context": {
+						"[Id]" : { 
+							"table": "Well",
+							"column": "Well Unique Id",
+							"dim": "[Well.Well Unique Id]",
+							"datatype": "numeric"
+						}
+					},
+					
+					"title": "Id Count"
+				}
+			});
+
 			// pushing items
 			widget.metadata.panel("latlng").items.forEach(function (item) {
 
@@ -191,42 +211,30 @@ prism.registerWidget("googleMaps", {
 				item.panel = "scope";
 
 				query.metadata.push(item);
+				testQuery.metadata.push(item);
 			});
 			
-			// Lat and Long
-			/*query.metadata.push({
-				"disabled": false,
-				"jaql": {
-					"collapsed": false,
-					"column": "Latitude",
-					"datatype": "numeric",
-					"dim": "[Well.Latitude]",
-					"filter": {
-						"from": "28.4795",
-						"to": "29.85455139"
-					},
-					"table": "Well",
-					"title": "Latitude"
-				},
-				"panel": "scope"
+			// Dashboard filters
+			prism.activeDashboard.filters.flatten().forEach(function (object) {
+				testQuery.metadata.push(object);
 			});
-			query.metadata.push({
-				"disabled": false,
-				"jaql": {
-					"collapsed": false,
-					"column": "Longitude",
-					"datatype": "numeric",
-					"dim": "[Well.Longitude]",
-					"filter": {
-						"from": "-98.28963889",
-						"to": "-97.58888"
-					},
-					"table": "Well",
-					"title": "Longitude"
+			
+			$.ajax({
+				type: 'POST',
+				url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
+				data: JSON.stringify(testQuery),
+				success: function(data) {
+					var result = data.values[0];
+					
+					if (result.length === undefined)
+						console.log('Total Rows: ' + result.data);
+					else
+						console.log('Total Rows: ' + result[0].data);
 				},
-				"panel": "scope"
-			});*/
-		
+				dataType: 'json',
+				async: false
+			});
+
 			return query;
 		},
 
