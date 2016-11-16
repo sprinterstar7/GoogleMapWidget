@@ -151,6 +151,26 @@ prism.registerWidget("googleMaps", {
 			query.count = 25000;//0;
 			query.offset = 0;
 
+			var testQuery = {
+				datasource : widget.datasource,
+				metadata : []
+			};
+			testQuery.metadata.push({
+				"jaql": {
+					"formula":"COUNT(Id)",
+					"context": {
+						"[Id]" : { 
+							"table": "Well",
+							"column": "Well Unique Id",
+							"dim": "[Well.Well Unique Id]",
+							"datatype": "numeric"
+						}
+					},
+					
+					"title": "Id Count"
+				}
+			});
+
 			// pushing items
 			widget.metadata.panel("latlng").items.forEach(function (item) {
 
@@ -191,41 +211,73 @@ prism.registerWidget("googleMaps", {
 				item.panel = "scope";
 
 				query.metadata.push(item);
+				testQuery.metadata.push(item);
 			});
+			
+			// Dashboard filters
+			prism.activeDashboard.filters.flatten().forEach(function (object) {
+				testQuery.metadata.push(object);
+			});
+			
+			/*
+			$.post(encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'), JSON.stringify(testQuery), function(data) {
+				var result = data.values[0];
+				
+				if (result.length === undefined)
+					console.log('Total Rows: ' + result.data);
+				else
+					console.log('Total Rows: ' + result[0].data);
+			}, 'json');*/
 
-			// Lat and Long
-			/*query.metadata.push({
-			 "disabled": false,
-			 "jaql": {
-			 "collapsed": false,
-			 "column": "Latitude",
-			 "datatype": "numeric",
-			 "dim": "[Well.Latitude]",
-			 "filter": {
-			 "from": "28.4795",
-			 "to": "29.85455139"
-			 },
-			 "table": "Well",
-			 "title": "Latitude"
-			 },
-			 "panel": "scope"
-			 });
-			 query.metadata.push({
-			 "disabled": false,
-			 "jaql": {
-			 "collapsed": false,
-			 "column": "Longitude",
-			 "datatype": "numeric",
-			 "dim": "[Well.Longitude]",
-			 "filter": {
-			 "from": "-98.28963889",
-			 "to": "-97.58888"
-			 },
-			 "table": "Well",
-			 "title": "Longitude"
-			 },
-			 "panel": "scope"
-			 });*/
+			$.ajax({
+				type: 'POST',
+				url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
+				data: JSON.stringify(testQuery),
+				success: function(data) {
+					var result = data.values[0];
+					var count = (result.length === undefined) ? result.data : result[0].data;
+
+					if (count > query.count) {
+						//console.log(count);
+						var column = 0;
+						try {
+							switch(widget.mapSettings.zoomLevel)
+							{
+								case 6:
+								case 7:
+								case 8:
+								case 9:
+								case 10: 
+								case 11:
+								case 12: column = "1";
+									break;
+								case 13:
+								case 14:
+								case 15: 
+								case 16: column = "2";
+									break;
+								case 17:
+								case 18:
+								case 19:
+								case 20: column = "3";
+									break;
+								default: // Map's first load
+										column = "-1";
+									break;
+							}
+						}
+						catch(err) {};
+						query.metadata[0].jaql.column = "Latitude" + column;
+						query.metadata[0].jaql.title = "Latitude" + column;
+						query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
+						query.metadata[1].jaql.column = "Longitude" + column;
+						query.metadata[1].jaql.title = "Longitude" + column;
+						query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
+					}
+				},
+				dataType: 'json',
+				async: false
+			});
 
 			return query;
 		},
@@ -375,259 +427,259 @@ prism.registerWidget("googleMaps", {
 										// Bring actual text top in line with desired latitude.
 										// Cheaper than calculating height of text.
 										style.marginTop = '-0.4em';
-									}
-								};
+							  }
+							};
 
-								/**
-								 * @inheritDoc
-								 */
-								MapLabel.prototype.onAdd = function() {
-									var canvas = this.canvas_ = document.createElement('canvas');
-									var style = canvas.style;
-									style.position = 'absolute';
+							/**
+							 * @inheritDoc
+							 */
+							MapLabel.prototype.onAdd = function() {
+							  var canvas = this.canvas_ = document.createElement('canvas');
+							  var style = canvas.style;
+							  style.position = 'absolute';
 
-									var ctx = canvas.getContext('2d');
-									ctx.lineJoin = 'round';
-									ctx.textBaseline = 'top';
+							  var ctx = canvas.getContext('2d');
+							  ctx.lineJoin = 'round';
+							  ctx.textBaseline = 'top';
 
-									this.drawCanvas_();
+							  this.drawCanvas_();
 
-									var panes = this.getPanes();
-									if (panes) {
-										panes.mapPane.appendChild(canvas);
-									}
-								};
-								MapLabel.prototype['onAdd'] = MapLabel.prototype.onAdd;
+							  var panes = this.getPanes();
+							  if (panes) {
+								panes.mapPane.appendChild(canvas);
+							  }
+							};
+							MapLabel.prototype['onAdd'] = MapLabel.prototype.onAdd;
 
-								/**
-								 * Gets the appropriate margin-left for the canvas.
-								 * @private
-								 * @param {number} textWidth  the width of the text, in pixels.
-								 * @return {number} the margin-left, in pixels.
-								 */
-								MapLabel.prototype.getMarginLeft_ = function(textWidth) {
-									switch (this.get('align')) {
-										case 'left':
-											return 0;
-										case 'right':
-											return -textWidth;
-									}
-									return textWidth / -2;
-								};
+							/**
+							 * Gets the appropriate margin-left for the canvas.
+							 * @private
+							 * @param {number} textWidth  the width of the text, in pixels.
+							 * @return {number} the margin-left, in pixels.
+							 */
+							MapLabel.prototype.getMarginLeft_ = function(textWidth) {
+							  switch (this.get('align')) {
+								case 'left':
+								  return 0;
+								case 'right':
+								  return -textWidth;
+							  }
+							  return textWidth / -2;
+							};
 
-								/**
-								 * @inheritDoc
-								 */
-								MapLabel.prototype.draw = function() {
-									var projection = this.getProjection();
+							/**
+							 * @inheritDoc
+							 */
+							MapLabel.prototype.draw = function() {
+							  var projection = this.getProjection();
 
-									if (!projection) {
-										// The map projection is not ready yet so do nothing
-										return;
-									}
+							  if (!projection) {
+								// The map projection is not ready yet so do nothing
+								return;
+							  }
 
-									if (!this.canvas_) {
-										// onAdd has not been called yet.
-										return;
-									}
+							  if (!this.canvas_) {
+								// onAdd has not been called yet.
+								return;
+							  }
 
-									var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
-									if (!latLng) {
-										return;
-									}
-									var pos = projection.fromLatLngToDivPixel(latLng);
+							  var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
+							  if (!latLng) {
+								return;
+							  }
+							  var pos = projection.fromLatLngToDivPixel(latLng);
 
-									var style = this.canvas_.style;
+							  var style = this.canvas_.style;
 
-									style['top'] = pos.y + 'px';
-									style['left'] = pos.x + 'px';
+							  style['top'] = pos.y + 'px';
+							  style['left'] = pos.x + 'px';
 
-									style['visibility'] = this.getVisible_();
-								};
-								MapLabel.prototype['draw'] = MapLabel.prototype.draw;
+							  style['visibility'] = this.getVisible_();
+							};
+							MapLabel.prototype['draw'] = MapLabel.prototype.draw;
 
-								/**
-								 * Get the visibility of the label.
-								 * @private
-								 * @return {string} blank string if visible, 'hidden' if invisible.
-								 */
-								MapLabel.prototype.getVisible_ = function() {
-									var minZoom = /** @type number */(this.get('minZoom'));
-									var maxZoom = /** @type number */(this.get('maxZoom'));
+							/**
+							 * Get the visibility of the label.
+							 * @private
+							 * @return {string} blank string if visible, 'hidden' if invisible.
+							 */
+							MapLabel.prototype.getVisible_ = function() {
+							  var minZoom = /** @type number */(this.get('minZoom'));
+							  var maxZoom = /** @type number */(this.get('maxZoom'));
 
-									if (minZoom === undefined && maxZoom === undefined) {
-										return '';
-									}
+							  if (minZoom === undefined && maxZoom === undefined) {
+								return '';
+							  }
 
-									var map = this.getMap();
-									if (!map) {
-										return '';
-									}
+							  var map = this.getMap();
+							  if (!map) {
+								return '';
+							  }
 
-									var mapZoom = map.getZoom();
-									if (mapZoom < minZoom || mapZoom > maxZoom) {
-										return 'hidden';
-									}
-									return '';
-								};
+							  var mapZoom = map.getZoom();
+							  if (mapZoom < minZoom || mapZoom > maxZoom) {
+								return 'hidden';
+							  }
+							  return '';
+							};
 
-								/**
-								 * @inheritDoc
-								 */
-								MapLabel.prototype.onRemove = function() {
-									var canvas = this.canvas_;
-									if (canvas && canvas.parentNode) {
-										canvas.parentNode.removeChild(canvas);
-									}
-								};
-								MapLabel.prototype['onRemove'] = MapLabel.prototype.onRemove;
+							/**
+							 * @inheritDoc
+							 */
+							MapLabel.prototype.onRemove = function() {
+							  var canvas = this.canvas_;
+							  if (canvas && canvas.parentNode) {
+								canvas.parentNode.removeChild(canvas);
+							  }
+							};
+							MapLabel.prototype['onRemove'] = MapLabel.prototype.onRemove;
 
+							
+							//	All 3 scripts loaded, Get the data
+							var qresult = s.queryResult.$$rows; // results
+							var headers = s.rawQueryResult.headers; // headers
+							
+							//	Define function to format numbers w/ commas
+							function formatWithCommas(x) {
+								var parts = x.toString().split(".");
+								return parts[0].replace(/\B(?=(\d{3})+(?=$))/g, ",") + (parts[1] ? "." + parts[1] : "");
+							};
 
-								//	All 3 scripts loaded, Get the data
-								var qresult = s.queryResult.$$rows; // results
-								var headers = s.rawQueryResult.headers; // headers
+							
+							function createMarker(radius, color) {
 
-								//	Define function to format numbers w/ commas
-								function formatWithCommas(x) {
-									var parts = x.toString().split(".");
-									return parts[0].replace(/\B(?=(\d{3})+(?=$))/g, ",") + (parts[1] ? "." + parts[1] : "");
-								};
+							  var canvas, context;
+							  var square = 2*radius;
 
+							  canvas = document.createElement("canvas");
+							  canvas.width = square;
+							  canvas.height = square;
 
-								function createMarker(radius, color) {
+							  context = canvas.getContext("2d");
 
-									var canvas, context;
-									var square = 2*radius;
+							  context.clearRect(0,radius,square,square);
 
-									canvas = document.createElement("canvas");
-									canvas.width = square;
-									canvas.height = square;
+							  // background is yellow
+							  context.fillStyle = color;//"rgba(0,160,220,1)";
+							  //context.fillStyle = "rgba(247,149,72,1)";
+							  //context.fillStyle = "rgba(254,207,5,1)";
 
-									context = canvas.getContext("2d");
+							  // border is black
+							  context.strokeStyle = "rgba(0,0,0,1)";
 
-									context.clearRect(0,radius,square,square);
+							  context.beginPath();
+							  context.arc(radius, radius, radius, 0, 2 * Math.PI);
+							  context.closePath();
 
-									// background is yellow
-									context.fillStyle = color;//"rgba(0,160,220,1)";
-									//context.fillStyle = "rgba(247,149,72,1)";
-									//context.fillStyle = "rgba(254,207,5,1)";
+							  context.fill();
+							  context.stroke();
 
-									// border is black
-									context.strokeStyle = "rgba(0,0,0,1)";
+							  return canvas.toDataURL();
 
-									context.beginPath();
-									context.arc(radius, radius, radius, 0, 2 * Math.PI);
-									context.closePath();
-
-									context.fill();
-									context.stroke();
-
-									return canvas.toDataURL();
-
-								}
-								var testMarker = createMarker(10, "#00A0DC");
-
-								// initialize map & map options
-								var myOptions = {
-									mapTypeId : google.maps.MapTypeId.ROADMAP,
-									zoom: 4,
-									center: {
-										lat: 37.09024, lng: -95.712891
-									},
-									styles: [
-										{
-											"featureType": "landscape",
-											"stylers": [
+							}
+							var testMarker = createMarker(10, "#00A0DC");
+							
+							// initialize map & map options
+							var myOptions = {
+								mapTypeId : google.maps.MapTypeId.ROADMAP,
+								zoom: 4,
+								center: {
+											lat: 37.09024, lng: -95.712891
+										},
+								styles: [
+											{
+												"featureType": "landscape",
+												"stylers": [
+													{ "invert_lightness": true },
+													{ "visibility": "simplified" },
+													{ "color": "#141414" }
+												]
+											}, {
+												"featureType": "water",
+												"stylers": [
+													{ "color": "#323232" },
+													{ "visibility": "on" }
+												]
+											}, {
+												"featureType": "administrative.locality",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "administrative.neighborhood",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "administrative.land_parcel",
+												"stylers": [
+													{ "visibility": "on" }
+												]
+											}, {
+												"featureType": "poi",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "road.highway",
+												"stylers": [
 												{ "invert_lightness": true },
-												{ "visibility": "simplified" },
-												{ "color": "#141414" }
-											]
-										}, {
-											"featureType": "water",
-											"stylers": [
-												{ "color": "#323232" },
-												{ "visibility": "on" }
-											]
-										}, {
-											"featureType": "administrative.locality",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "administrative.neighborhood",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "administrative.land_parcel",
-											"stylers": [
-												{ "visibility": "on" }
-											]
-										}, {
-											"featureType": "poi",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "road.highway",
-											"stylers": [
-												{ "invert_lightness": true },
-												{ "visibility": "simplified" }
-											]
-										}, {
-											"featureType": "road.arterial",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "road.local",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "transit",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "road.highway",
-											"elementType": "labels.icon",
-											"stylers": [
-												{ "visibility": "off" }
-											]
-										}, {
-											"featureType": "administrative.country",
-											"elementType": "geometry.fill"
-										}, {
-											"elementType": "labels.text.fill",
-											"stylers": [
-												{ "color": "#000000" }
-											]
-										}, {
-											"featureType": "administrative",
-											"elementType": "geometry.fill",
-											"stylers": [
-												{ "color": "#141414" }
-											]
-										}
-									]
-								};
-								var map = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
-
-								// County lines
-								var _countyLabels = [];
-								var _countyListener = null;
-								e.widget.countyLayer = new google.maps.FusionTablesLayer({
-									query: {
-										select: 'geometry, County Name',
-										from: '1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa'
-									},
-									suppressInfoWindows: true,
-									styles: [{
-										polygonOptions: {
-											fillColor: '#0000FF',
-											fillOpacity: 0.01,
-											strokeColor: '#FFFFFF'
+													{ "visibility": "simplified" }
+												]
+											}, {
+												"featureType": "road.arterial",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "road.local",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "transit",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "road.highway",
+												"elementType": "labels.icon",
+												"stylers": [
+													{ "visibility": "off" }
+												]
+											}, {
+												"featureType": "administrative.country",
+												"elementType": "geometry.fill"
+											}, {
+												"elementType": "labels.text.fill",
+												"stylers": [
+													{ "color": "#000000" }
+												]
+											}, {
+												"featureType": "administrative",
+												"elementType": "geometry.fill",
+												"stylers": [
+													{ "color": "#141414" }
+												]
+											}
+										]
+							};
+							var map = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
+							
+							// County lines
+							var _countyLabels = [];
+							var _countyListener = null;
+							var countyLayer = new google.maps.FusionTablesLayer({
+								query: {
+									select: 'geometry, County Name',
+									from: '1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa'
+								},
+								suppressInfoWindows: true,
+								styles: [{
+									polygonOptions: {
+										fillColor: '#0000FF',
+										fillOpacity: 0.01,
+										strokeColor: '#FFFFFF'
 										}
 									}]
 								});
@@ -1038,48 +1090,48 @@ prism.registerWidget("googleMaps", {
 								 infowindow.close();
 								 };*/
 
-								google.maps.event.addListener(map, 'bounds_changed', function() {
-									var bounds = map.getBounds();
-									var NE = bounds.getNorthEast();
-									var SW = bounds.getSouthWest();
-									var zoom = map.getZoom();
-									e.widget.queryMetadata = {
-										"zoom": zoom,
-										"neLat": NE.lat(),
-										"neLong": NE.lng(),
-										"swLat": SW.lat(),
-										"swLong": SW.lng()
-									};
-								});
-
-								google.maps.event.addListener(map, 'zoom_changed', function() {
-									switch(map.getZoom()) {
-										case 6: e.widget.countyLayer.setMap(map);
-											break;
-										case 5: e.widget.countyLayer.setMap(null);
-											break;
-										case 8: if (_countyListener) {
-											_countyListener.remove();
-											_countyListener = null;
-										}
+							google.maps.event.addListener(map, 'bounds_changed', function() {
+								var bounds = map.getBounds();
+								var NE = bounds.getNorthEast();
+								var SW = bounds.getSouthWest();
+								var zoom = map.getZoom();
+								e.widget.mapSettings = {
+									"zoomLevel": zoom,
+									"neLat": NE.lat(),
+									"neLong": NE.lng(),
+									"swLat": SW.lat(),
+									"swLong": SW.lng()
+								};
+							});
+							
+							google.maps.event.addListener(map, 'zoom_changed', function() {
+								switch(map.getZoom()) {
+									case 6: countyLayer.setMap(map);
+									 break;
+									case 5: countyLayer.setMap(null);
+									 break;
+									case 8: if (_countyListener) {
+												_countyListener.remove();
+												_countyListener = null;
+											}
 											_.each(_countyLabels, function (label) {
 												label.setMap(null);
 											});
 											break;
-										case 9: if (!_countyListener) {
-											_countyListener = google.maps.event.addListener(map, 'bounds_changed', function () {
-												_.each(_countyLabels, function (label) {
-													if(map.getBounds().contains(label.position)) {
-														if (label.map == null) {
-															label.setMap(map);
+									case 9: if (!_countyListener) {
+												_countyListener = google.maps.event.addListener(map, 'bounds_changed', function () {
+													_.each(_countyLabels, function (label) {
+														if(map.getBounds().contains(label.position)) {
+															if (label.map == null) {
+																label.setMap(map);
+															}
 														}
-													}
-													else {
-														label.setMap(null);
-													}
+														else {
+															label.setMap(null);
+														}
+													});
 												});
-											});
-										}
+											}
 											break;
 									}
 								});
