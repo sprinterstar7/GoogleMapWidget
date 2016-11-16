@@ -234,3 +234,44 @@
     background: lightgrey;
     transition: .25s;
 }
+
+/* Color Legend Row */
+
+#mapSidebarColorTable th {
+    text-align: left;
+    font-size: 20px;
+    padding-left: 5px;
+}
+
+
+#mapSidebarColorTable tr {
+    border-bottom: 1px solid rgb(128, 129, 133);
+}
+
+#mapSidebarColorTable td, #mapSidebarColorTable th {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+#mapSidebarColorTable th {
+    text-align: left;
+    font-size: 20px;
+    padding-left: 5px;
+}
+
+.colorLegendDescription { 
+    min-width: 200px;
+    font-size: 16px;
+    padding-left: 5px;
+}
+
+.colorLegendImg { 
+    min-width: 80px;
+}
+
+.colorLegendImg img { 
+    min-width: 25px;
+    min-height: 25px;
+    height: 25px;
+    width: 25px;
+}

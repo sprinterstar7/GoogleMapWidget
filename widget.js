@@ -565,6 +565,12 @@ prism.registerWidget("googleMaps", {
 							//	All 3 scripts loaded, Get the data
 							var qresult = s.queryResult.$$rows; // results
 							var headers = s.rawQueryResult.headers; // headers
+
+							var colorCategory;
+							if(e.widget.metadata.panel('color').items[0] && e.widget.metadata.panel('color').items[0].jaql && e.widget.metadata.panel('color').items[0].jaql.column) { 
+								colorCategory = e.widget.metadata.panel('color').items[0].jaql.column;
+							}
+
 							var shapeCategory;
 							if(e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) { 
 								shapeCategory = e.widget.metadata.panel('shape').items[0].jaql.column;
@@ -1222,6 +1228,15 @@ prism.registerWidget("googleMaps", {
 								,'bar-vertical'
 							];
 
+							function addRowsToColorLegend(arr) { 								
+								_.each(arr, function(row){
+									$('#mapSidebarColorTable tbody').append($("<tr id='colorRow"+row.value+"' class='colorLegendRow'>"
+										+"<td class='colorLegendDescription'><span>"+row.value+"</span></td>"
+										+"<td class='colorLegendImg'><img src='http://qavm.eastus2.cloudapp.azure.com/Explorer/GetColoredShape?shape=square&color=FF" + row.color.replace('#', '') + "'/></td>"
+									+"</tr>"));
+								});
+							}
+
 							function addRowsToShapeBy(arr) { 
 								var shapeColumn = _.find(shapesMetadata, function(category){
 									return category.column == shapeCategory;
@@ -1352,7 +1367,8 @@ prism.registerWidget("googleMaps", {
 							$('#mapSidebarContent').append($('<div id="mapColorLegendContent"></div>'));
 							$('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
 
-							$('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody></tbody></table>'));
+							$('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody><tr><th>' + (colorCategory ? colorCategory : "No Results") 
+								+'</th><th></th></tbody></table>'));
 							$('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th>'+ (shapeCategory ? shapeCategory : "No Results") 
 								+'</th><th></th><tr></tbody></table>'));
 
@@ -1419,6 +1435,14 @@ prism.registerWidget("googleMaps", {
 							//	Init Variables
 							var shapesMetadata = [];
 							var savedShapesCategory; 
+
+							var colorArray = _.map(qresult, function(item){
+								return item[3] && item[3].data && item[3].color? { value: item[3].text, color: item[3].color } : null;
+							});
+							colorArray = _.uniq(colorArray, function(item) {
+								return JSON.stringify(item);
+							});
+							colorArray = _.compact(colorArray);
 
 							var shapeArray = _.map(qresult, function(item){
 								return item[4] && item[4].data ? item[4].data : null;
@@ -1583,6 +1607,10 @@ prism.registerWidget("googleMaps", {
 							if(shapeArray) { 
 								addRowsToShapeBy(shapeArray);
 							}	
+
+							if(colorArray) {
+								addRowsToColorLegend(colorArray);
+							}
 
 							google.maps.event.addListener(map, 'bounds_changed', function() {
 								var bounds = map.getBounds();
