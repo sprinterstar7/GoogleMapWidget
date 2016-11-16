@@ -769,28 +769,36 @@ prism.registerWidget("googleMaps", {
 										selector = row;
 									}
 									$('#shapeRow'+selector+' td.shapeLegendImg img').click(function() {
-										console.log(row);
 										openShapeSelection(row);
 									});
 								});
 							}
 
-							function openShapeSelection(row) { 
-								var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
-								$('#mapShapeLegendContent').append($(htmlString));
+							var open;
+							function openShapeSelection(row) {
+								$('#shapeSelectionWindow').remove(); 
+								if(open != row) { 
+									var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
+									$(map.getDiv()).append($(htmlString));
+									var top = 100 + (shapeArray.indexOf(row) * 35);
+									$('#shapeSelectionWindow').css("top", "" + top +  "px"); 
+									open = row;
+									_.each(availableShapes, function(shape) {
+										var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
+															+ '<img src="../Resources/shapes/'+shape+'.png"'
+															+ 'title="'+shape+'"/>'
+															'</div>'
+										$('#shapeSelectionWindow #shapeSelectionContent').append(shapeString);
 
-								_.each(availableShapes, function(shape) {
-									var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
-														+ '<img src="../Resources/shapes/'+shape+'.png"'
-														+ 'title="'+shape+'"/>'
-														'</div>'
-									$('#shapeSelectionWindow #shapeSelectionContent').append(shapeString);
-
-									$('#shapeSelectionWindow div #'+shape).click(function(){
-										changeShapeOfCategory(row, shape);
-										$('#shapeSelectionWindow').remove();
+										$('#shapeSelectionWindow div #'+shape).click(function(){
+											changeShapeOfCategory(row, shape);
+											$('#shapeSelectionWindow').remove();
+										});
 									});
-								});
+								}
+								else { 
+									open = null;
+								}
 							}
 
 							function changeShapeOfCategory(data, shape) { 

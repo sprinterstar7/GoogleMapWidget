@@ -62,6 +62,7 @@
 
 /* Map Sidebar */
 
+
 #mapSidebar {
     
     z-index: 1000;
@@ -124,15 +125,112 @@
     background: rgb(252, 156, 70);
     color: rgb(255, 255, 255);
     font-size: 20px;
-    padding-left: 25px;
-    padding-top: 10px;
+    text-align: center;
+}
+
+#mapSidebarHeader span{
+    display: inline-block;
+    margin-left: 10px;
+    margin-right: 10px;
+    height: 40px;
+    margin-top: 10px;
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    cursor: pointer;
+}
+
+#mapSidebarHeader .active {
+    background-color: rgb(216, 130, 60);
     font-weight: bold;
 }
 
-#mapSidebarInfo { 
+#mapSidebarHeader .inactive {
+
+}
+
+#mapSidebarHeader .tabDivider {
+    position: relative;
+    width: 1px;
+    max-width: 1px;
+    height: 36px;
+    margin: 0px;
+    top: 14px;
+    padding: 0px;
+    background-color: rgb(216, 130, 60);
+}
+
+#mapShapeLegendContent , #mapColorLegendContent { 
     margin: 10px;
     overflow-y: auto;
     color: white;
     background: rgb(152, 154, 156);
     font-size: 16px;
+}
+
+/* Shape Selection */
+
+#mapSidebarShapeTable th {
+    text-align: left;
+    font-size: 20px;
+    padding-left: 5px;
+}
+
+
+#mapSidebarShapeTable tr {
+    border-bottom: 1px solid rgb(128, 129, 133);
+}
+
+#mapSidebarShapeTable td, #mapSidebarShapeTable th {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+#mapSidebarShapeTable th {
+    text-align: left;
+    font-size: 20px;
+    padding-left: 5px;
+}
+
+.shapeLegendRow { 
+    
+}
+
+.shapeLegendDescription { 
+    min-width: 200px;
+    font-size: 16px;
+    padding-left: 5px;
+}
+
+.shapeLegendImg { 
+    min-width: 80px;
+}
+
+.shapeLegendImg img { 
+    cursor: pointer;
+}
+
+/* Shape Selection Window */
+
+#shapeSelectionWindow {
+    position: absolute;
+    left: 300px;
+    width: 250px;
+    background: rgb(128, 129, 133);
+    z-index: 1000;  
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.shapeSelectionRow {
+    cursor: pointer;
+    height: 25px;
+    width: 25px;
+    display: inline-block;
+    margin: 5px;
+}
+
+.shapeSelectionRow:hover{
+    background: lightgrey;
+    transition: .25s;
 }
