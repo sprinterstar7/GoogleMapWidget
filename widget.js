@@ -51,6 +51,14 @@ prism.registerWidget("googleMaps", {
 				}
 			},
 			{
+				name : 'shape',
+				type : 'visible',
+				metadata : {
+					types : ['dimensions'],
+					maxitems : 1
+				}
+			},
+			{
 				name : 'details',
 				type : 'visible',
 				metadata : {
@@ -70,9 +78,13 @@ prism.registerWidget("googleMaps", {
 		],
 
 		canColor: function (widget, panel, item) {
-			return panel.name === "color";
-		},
+            return panel.name === "color";
+        },
 
+		canShape: function (widget, panel, item) {
+            return panel.name === "shape";
+        },
+		
 		allocatePanel : function (widget, metadataItem) {
 			// measure
 			if (prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("value").items.length === 0) {
@@ -86,6 +98,12 @@ prism.registerWidget("googleMaps", {
 				return "color";
 			}
 
+			// shape by
+			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("shape").items.length === 0) {
+
+				return "shape";
+			}
+			
 			// details
 			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("details").items.length === 0) {
 
@@ -127,6 +145,7 @@ prism.registerWidget("googleMaps", {
 			widget.metadata.panel("latlng").push(a.dimensions);
 			widget.metadata.panel("value").push(a.measures);
 			widget.metadata.panel("color").push(a.color);
+			widget.metadata.panel("shape").push(a.shape);
 			widget.metadata.panel("details").push(a.details);
 			widget.metadata.panel("filters").push(a.filters);
 		},
@@ -196,6 +215,12 @@ prism.registerWidget("googleMaps", {
 				query.metadata.push(colorPanel.items[0])
 			}
 
+			// pushing shape
+			var shapePanel = widget.metadata.panel("shape");
+			if (shapePanel && shapePanel.items.length > 0) {
+				query.metadata.push(shapePanel.items[0])
+			}
+			
 			// pushing details
 			var detailsPanel = widget.metadata.panel("details");
 			if(detailsPanel){
@@ -538,12 +563,22 @@ prism.registerWidget("googleMaps", {
 							//	All 3 scripts loaded, Get the data
 							var qresult = s.queryResult.$$rows; // results
 							var headers = s.rawQueryResult.headers; // headers
-							
+							var shapeCategory;
+							if(e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) { 
+								shapeCategory = e.widget.metadata.panel('shape').items[0].jaql.column;
+							}
 							//	Define function to format numbers w/ commas
 							function formatWithCommas(x) {
 								var parts = x.toString().split(".");
 								return parts[0].replace(/\B(?=(\d{3})+(?=$))/g, ",") + (parts[1] ? "." + parts[1] : "");
 							};
+							
+							function createColoredShapeMarker(shape, color) {
+
+							  var base = location.host.replace(":8081", "");
+							  var url = "/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + color;
+							  return base + url;
+							}
 
 							
 							function createMarker(radius, color) {
@@ -577,6 +612,7 @@ prism.registerWidget("googleMaps", {
 							  return canvas.toDataURL();
 
 							}
+
 							var testMarker = createMarker(10, "#00A0DC");
 							
 							// initialize map & map options
@@ -822,145 +858,399 @@ prism.registerWidget("googleMaps", {
 									updateWellIDFilter(event);
 								});
 
-								function updateWellIDFilter(event){
-									if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
-										var wellFieldName = "Well Unique Id",
-											filterFields = prism.activeDashboard.filters.$$items,
-											bounds = event.overlay.bounds;
+							function updateWellIDFilter(event){
+								if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
+									var wellFieldName = "Well Unique Id",
+										filterFields = prism.activeDashboard.filters.$$items,
+										bounds = event.overlay.bounds;
 
-										var wellField = createDashFilter(wellFieldName,filterFields);
+									var wellField = createDashFilter(wellFieldName,filterFields);
 
-										// Add the lat and long as attributes
-										addLatLngOrAttribute(wellField,bounds);
+									// Add the lat and long as attributes
+									addLatLngOrAttribute(wellField,bounds);
 
-										var options = {
-											save: false,
-											refresh: false
-										};
-
-										//  Set via JavaScript API
-										prism.activeDashboard.filters.update(wellField,options);
-
-										//  Make sure the widgets get refreshed
-										var refreshDashboard = function(){
-											$.each(prism.activeDashboard.widgets.$$widgets,function(){
-												this.refresh();
-											})
-										};
-
-										setTimeout(refreshDashboard,500);
-									}
-								}
-
-								function addLatLngOrAttribute(wellField,bounds){
-									var latItem = {"attributes":[{
-										"table": "Well",
-										"column": "Latitude",
-										"dim": "[Well.Latitude]",
-										"datatype": "numeric",
-										"title": "Latitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": bounds.f.f
-											}, {
-												"toNotEqual": bounds.f.b
-											}
-											]
-										}
-									}]};
-									var lngItem = {"attributes":[{
-										"table": "Well",
-										"column": "Longitude",
-										"dim": "[Well.Longitude]",
-										"datatype": "numeric",
-										"title": "Longitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": bounds.b.b
-											}, {
-												"toNotEqual": bounds.b.f
-											}
-											]
-										}
-									}]};
-
-									wellField.jaql.filter.or.push({
-										"and":[latItem,lngItem]
-									});
-								}
-
-
-								function createDashFilter(name,filterFields,from,to){
-									var field = getFieldFromItems(name, filterFields);
-
-									if (!field) {
-										field = createFieldToFilterPanel(name);
-									}
-
-									return field;
-								}
-
-								function getFieldFromItems(field,items){
-									return _.find(items,function(item){
-										if($$get(item,"jaql.dim") &&
-											((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
-											return item;
-										}
-									});
-								}
-
-								function createFieldToFilterPanel(fieldName){
-									return {
-										"jaql": {
-											"table": "Well",
-											"column": fieldName,
-											"dim": "[Well." + fieldName + "]",
-											"datatype": "numeric",
-											"title": fieldName,
-											"filter": {
-												"or": []
-											}
-										}
+									var options = {
+										save: false,
+										refresh: false
 									};
+
+									//  Set via JavaScript API
+									prism.activeDashboard.filters.update(wellField,options);
+
+									//  Make sure the widgets get refreshed
+									var refreshDashboard = function(){
+										$.each(prism.activeDashboard.widgets.$$widgets,function(){
+											this.refresh();
+										})
+									};
+
+									setTimeout(refreshDashboard,500);
+								}
+							}
+
+							function addLatLngOrAttribute(wellField,bounds){
+								var latItem = {"attributes":[{
+									"table": "Well",
+									"column": "Latitude",
+									"dim": "[Well.Latitude]",
+									"datatype": "numeric",
+									"title": "Latitude",
+									"collapsed": true,
+									"filter": {
+										"and":[{
+											"fromNotEqual": bounds.f.f
+										}, {
+											"toNotEqual": bounds.f.b
+										}
+										]
+									}
+								}]};
+								var lngItem = {"attributes":[{
+									"table": "Well",
+									"column": "Longitude",
+									"dim": "[Well.Longitude]",
+									"datatype": "numeric",
+									"title": "Longitude",
+									"collapsed": true,
+									"filter": {
+										"and":[{
+											"fromNotEqual": bounds.b.b
+										}, {
+											"toNotEqual": bounds.b.f
+										}
+										]
+									}
+								}]};
+
+								wellField.jaql.filter.or.push({
+									"and":[latItem,lngItem]
+								});
+							}
+
+
+							function createDashFilter(name,filterFields,from,to){
+								var field = getFieldFromItems(name, filterFields);
+
+								if (!field) {
+									field = createFieldToFilterPanel(name);
 								}
 
-								//	Define bounding object (for auto zoom/center)
-								var bounds = new google.maps.LatLngBounds();
+								return field;
+							}
 
-								//	Create an object to handle multiple markers at the same coordinates
-								var omsOptions = {
+							var availableShapes = [
+								'square'
+								,'diamond'
+								,'circle'
+								,'triangle-up'
+								,'triangle-down'
+								,'triangle-left'
+								,'triangle-right'
+								,'pentagon'
+								,'hexagon'
+								,'star'
+								,'three-point-star'
+								,'four-point-star'
+								,'gear'
+								,'x-shape'
+								,'plus'
+								,'arrow-up'
+								,'arrow-down'
+								,'arrow-left'
+								,'arrow-right'
+								,'bar-horizontal'
+								,'bar-vertical'
+							];
+
+							function addRowsToShapeBy(arr) { 
+								var shapeColumn = _.find(shapesMetadata, function(category){
+									return category.column == shapeCategory;
+								});
+								
+								_.each(arr, function(row){
+									var shape = "circle";
+									if(shapeColumn && shapeColumn.items) { 
+										var item = _.find(shapeColumn.items, function(item) { 
+											return item.value == row;
+										});
+										if(item) { 
+											shape = item.shape;
+										}
+									}
+									$('#mapSidebarShapeTable tbody').append($("<tr id='shapeRow"+row+"' class='shapeLegendRow'>"
+										+"<td class='shapeLegendDescription'><span>"+row+"</span></td>"
+										+"<td class='shapeLegendImg'><img src='../Resources/shapes/"+shape+".png'/></td>"
+									+"</tr>"));
+									var selector;
+									if (typeof row === 'string' || row instanceof String) { 
+										selector = row.replace("\\", "\\\\")
+									}
+									else { 
+										selector = row;
+									}
+									$('#shapeRow'+selector+' td.shapeLegendImg img').click(function() {
+										openShapeSelection(row);
+									});
+								});
+							}
+
+							var open;
+							function openShapeSelection(row) {
+								$('#shapeSelectionWindow').remove(); 
+								if(open != row) { 
+									var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
+									$(map.getDiv()).append($(htmlString));
+									var top = 100 + (shapeArray.indexOf(row) * 35);
+									$('#shapeSelectionWindow').css("top", "" + top +  "px"); 
+									open = row;
+									_.each(availableShapes, function(shape) {
+										var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
+															+ '<img src="../Resources/shapes/'+shape+'.png"'
+															+ 'title="'+shape+'"/>'
+															'</div>'
+										$('#shapeSelectionWindow #shapeSelectionContent').append(shapeString);
+
+										$('#shapeSelectionWindow div #'+shape).click(function(){
+											changeShapeOfCategory(row, shape);
+											$('#shapeSelectionWindow').remove();
+										});
+									});
+								}
+								else { 
+									open = null;
+								}
+							}
+
+							function changeShapeOfCategory(data, shape) { 
+								_.each(markers, function(marker){
+									if(marker.shape === data) { 
+										marker.marker.icon = 
+										{
+											url: "http://qavm.eastus2.cloudapp.azure.com/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + marker.color.replace('#', ''),
+											anchor: new google.maps.Point(10, 10)
+                						};
+										marker.marker.setMap(null);
+										marker.marker.setMap(map);
+									}
+								});
+								var selector;
+								if (typeof data === 'string' || data instanceof String) { 
+									selector = data.replace("\\", "\\\\")
+								}
+								else { 
+									selector = data;
+								}
+								$('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '../Resources/shapes/'+shape+'.png');
+								var shapeMetadataColumn = _.find(shapesMetadata, function(category){
+									return category.column == shapeCategory;
+								});
+								if(shapeMetadataColumn) {
+									var item = _.find(shapeMetadataColumn.items, function(item){
+										return item.value == data;
+									});
+									if(item && item.shape) { 
+										item.shape = shape;
+									}
+									else { 
+										shapeMetadataColumn.items.push({
+											value : data,
+											shape: shape
+										})
+									}
+								}
+								else { 
+									shapesMetadata.push({
+										column : shapeCategory,
+										items : [{
+											value : data,
+											shape: shape
+										}] 
+									})
+								}
+								e.widget.queryMetadata.savedShapes = shapesMetadata;
+								e.widget.changesMade();
+							}
+							
+							//Map Side Bar Begin
+
+							$(map.getDiv()).append($('<div id="mapSidebar">'
+								+ '<div id="mapSidebarHide"><i class="fa fa-caret-left"></i></div>'
+								+ '<div id="mapSidebarContent"></div>'
+								+ '</div>'));
+							$('#mapSidebar').css('left', 0);
+							$('#mapSidebar').css('top', 0);
+							$('#mapSidebar').hide();
+
+							$(map.getDiv()).append($('<div id="mapSidebarShow"><i class="fa fa-caret-right"></i></div>'));
+
+							$('#mapSidebarContent').height($(map.getDiv()).height());
+							$('#mapSidebarContent').append($('<div id="mapSidebarHeader">'
+								+ '<span class="active" id="colorLegend">Color Legend</span>'
+								+ '<span class="tabDivider"></span>'
+								+ '<span class="inactive" id="shapeLegend">Shape by</span>'
+							+ '</div>'));
+							$('#mapSidebarContent').append($('<div id="mapColorLegendContent">some color legend stuff</div>'));
+							$('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
+
+							$('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody></tbody></table>'));
+							$('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th>'+ (shapeCategory ? shapeCategory : "No Results") 
+								+'</th><th></th><tr></tbody></table>'));
+
+							$('#mapColorLegendContent').height($(map.getDiv()).height() - 70);
+							$('#mapShapeLegendContent').height($(map.getDiv()).height() - 70);
+
+							$('#mapShapeLegendContent').hide();
+
+							$('#mapSidebarShow').click(function () {
+								$("#mapSidebarShow").hide();
+								$('#mapSidebar').show("slide", { direction: "left" }, 200);
+							});
+
+							$('#colorLegend').click(function () {
+								$('#colorLegend').addClass('active').removeClass('inactive');
+								$('#shapeLegend').addClass('inactive').removeClass('active');
+								$('#mapShapeLegendContent').hide();
+								$('#mapColorLegendContent').show();
+							});
+
+							$('#shapeLegend').click(function () {
+								$('#shapeLegend').addClass('active').removeClass('inactive');
+								$('#colorLegend').addClass('inactive').removeClass('active');
+								$('#mapColorLegendContent').hide();
+								$('#mapShapeLegendContent').show();
+							});   
+
+							//Map Side Bar End
+
+							function getFieldFromItems(field,items) {
+								return _.find(items,function(item){
+									if($$get(item,"jaql.dim") &&
+										((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
+										return item;
+									}
+								});
+							}
+
+							function createFieldToFilterPanel(fieldName){
+								return {
+									"jaql": {
+										"table": "Well",
+										"column": fieldName,
+										"dim": "[Well." + fieldName + "]",
+										"datatype": "numeric",
+										"title": fieldName,
+										"filter": {
+											"or": []
+										}
+									}
+								};
+							}
+							
+							// Draw Manager
+							var _drawManager = new google.maps.drawing.DrawingManager({
+								drawingControl: true,
+								drawingControlOptions: {
+									position: google.maps.ControlPosition.TOP_CENTER,
+									drawingModes: [
+										google.maps.drawing.OverlayType.POLYGON
+										, google.maps.drawing.OverlayType.CIRCLE
+										, google.maps.drawing.OverlayType.RECTANGLE
+										, google.maps.drawing.OverlayType.POLYLINE
+									]
+								},
+								circleOptions: {
+									fillColor: '#d22927',
+									fillOpacity: 0.5,
+									strokeWeight: 1,
+									strokeColor: '#000000',
+									clickable: true,
+									editable: false,
+									suppressUndo: true
+								},
+								rectangleOptions: {
+									fillColor: '#d22927',
+									fillOpacity: 0.5,
+									strokeWeight: 1,
+									strokeColor: '#000000',
+									clickable: true,
+									editable: false,
+									draggable: false,
+									suppressUndo: true
+								},
+								polygonOptions: {
+									fillColor: '#d22927',
+									fillOpacity: 0.5,
+									strokeWeight: 1,
+									strokeColor: '#000000',
+									clickable: true,
+									editable: false,
+									draggable: false,
+									suppressUndo: true
+								},
+								polylineOptions: {
+									fillColor: '#d22927',
+									fillOpacity: 0.5,
+									strokeWeight: 3,
+									clickable: true,
+									editable: false,
+									draggable: true,
+									suppressUndo: true
+								}
+							});
+							_drawManager.setMap(map);
+							
+							//	Define bounding object (for auto zoom/center)
+							var bounds = new google.maps.LatLngBounds();
+							
+							//	Create an object to handle multiple markers at the same coordinates
+							var omsOptions = {
 									markersWontMove : true,
 									markersWontHide : true,
 									keepSpiderfied : true
-								};
-								var oms = new OverlappingMarkerSpiderfier(map, omsOptions);
+							};
+							var oms = new OverlappingMarkerSpiderfier(map, omsOptions);
+							
+							//	Define the info window for popups
+							//var infowindow = new google.maps.InfoWindow();
 
-								//	Define the info window for popups
-								//var infowindow = new google.maps.InfoWindow();
+							//	Init Variables
+							var shapesMetadata = [];
+							var savedShapesCategory; 
 
-								//	Init Variables
-								var i = 0,
-									dataSize = qresult.length,
-									j,
-									headersSize = headers.length,
-									markers = [],
-									markerText,
-									clusterLabel = '',
-									colors = { "#00A0DC": testMarker };
+							var shapeArray = _.map(qresult, function(item){
+								return item[4] && item[4].data ? item[4].data : null;
+							});
+							shapeArray = _.uniq(shapeArray);
+							shapeArray = _.compact(shapeArray);
 
-								//	Create each marker for the map
-								for (; i < dataSize; i++) {
+							var i = 0,
+								dataSize = qresult.length,
+								j,
+								headersSize = headers.length,
+								markers = [],
+								markerText,
+								clusterLabel = '',
+								colors = { "#00A0DC": testMarker };
 
-									//	Define the info window HTML
-									markerText = '<span style="font-family:arial,sans-serif; line-height:150%;" '
-										+ ' onclick="google.maps.closeInfoWindow()" >'
-										+ '<span style="line-height:200%;font-size:120%;text-decoration:underline"><b>'
-										+ 'INFO' + '</b></span>';
+							if(e.widget.queryMetadata.savedShapes) {
+								shapesMetadata = e.widget.queryMetadata.savedShapes;
+							};
+							if(shapesMetadata) { 
+								savedShapesCategory = _.find(shapesMetadata, function(category){
+									return category.column == shapeCategory;
+								})
+							}
+							//	Create each marker for the map
+							for (; i < dataSize; i++) {
+							
+								//	Define the info window HTML
+								markerText = '<span style="font-family:arial,sans-serif; line-height:150%;" ' 
+									+ ' onclick="google.maps.closeInfoWindow()" >' 
+									+ '<span style="line-height:200%;font-size:120%;text-decoration:underline"><b>' 
+									+ 'INFO' + '</b></span>';
 
-									//	Add the rest of data to be presented in the info window
-									var measureIndex = 2;
+								//	Add the rest of data to be presented in the info window
+								var measureIndex = 2;
 									j = measureIndex;
 									for (; j < headersSize; j++) {
 										markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
@@ -996,99 +1286,111 @@ prism.registerWidget("googleMaps", {
 									 new google.maps.Point(12, 35));*/
 
 									// Create the marker
-									var marker = new google.maps.Marker({
+								var shape = "circle";
+								if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
+									var item = _.find(savedShapesCategory.items, function(item) { 
+										return item.value == qresult[i][4].data;
+									});
+									if(item) { 
+										shape = item.shape;
+									}
+								}
+
+								//	Create the marker image and shadow
+								/*var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
+									new google.maps.Size(21, 34),
+									new google.maps.Point(0,0),
+									new google.maps.Point(10, 34));
+								/*var pinShadow = new google.maps.MarkerImage(protocol + externalPaths.images.pinShadow,
+									new google.maps.Size(40, 37),
+									new google.maps.Point(0, 0),
+									new google.maps.Point(12, 35));*/
+
+								// Create the marker
+								var marker; 
+								if(shapeCategory) { 
+									marker = new google.maps.Marker({
 										map : map,
 										position : new google.maps.LatLng(lat, lng),
 										raiseOnDrag : false,
 										visible : true,
 										draggable : false,
-										icon : colors[pinColor],//testMarker,//pinImage,
-										//icon: {
-										/*url: protocol + externalPaths.images.pinColor + pinColor,
-										 size: new google.maps.Size(21, 34),
-										 origin: new google.maps.Point(0,0),
-										 anchor: new google.maps.Point(10, 34)
-										 /*path: google.maps.SymbolPath.CIRCLE,
-										 scale: 8,
-										 fillColor: "#FF0000",
-										 strokeColor: "#000000",
-										 strokeWeight: 0.5,
-										 fillOpacity: 1*/
-										//},
-										//shadow: pinShadow,
-										/*shadow: {
-										 url: protocol + externalPaths.images.pinShadow,
-										 size: new google.maps.Size(40, 37),
-										 origin: new google.maps.Point(0,0),
-										 anchor: new google.maps.Point(12, 35)
-										 },*/
+										icon: {
+											url: "http://qavm.eastus2.cloudapp.azure.com/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
+											anchor: new google.maps.Point(10, 10)
+                						},
 										title : qresult[i][measureIndex]["text"], // the formatted value of each marker
 										value : qresult[i][measureIndex]["data"] // the value of each marker
 									});
-
-									//	Add data to the marker
-									marker.sisenseTooltip = markerText;
-
-									//	Add the marker to the OMS
-									//oms.addMarker(marker);
-
-									//	Add the marker's position to the boundary object
-									//bounds.extend(marker.position);
-
-									//	Add the marker to the array of all markers
-									//markers.push(marker);
-									//console.log(i);
 								}
+								else { 
+									marker = new google.maps.Marker({
+										map : map,
+										position : new google.maps.LatLng(lat, lng),
+										raiseOnDrag : false,
+										visible : true,
+										draggable : false,
+										icon : colors[pinColor],
+										title : qresult[i][measureIndex]["text"], // the formatted value of each marker
+										value : qresult[i][measureIndex]["data"] // the value of each marker
+									});
+								}
+								
+								//	Add data to the marker
+								marker.sisenseTooltip = markerText;
+								
+								//	Add the marker to the OMS
+								//oms.addMarker(marker);
+								
+								//	Add the marker's position to the boundary object
+								//bounds.extend(marker.position);
+								
+								//	Add the marker to the array of all markers
+								//markers.push(marker);
+								//console.log(i);
 
-								//Add event listeners to each marker, to popup the info window
-								/*oms.addListener('click', function(marker, event) {
+								markers.push({
+									marker : marker, 
+									color: pinColor,
+									shape : (qresult[i][4] && qresult[i][4].data) ? qresult[i][4].data : null
+								});
 
-								 infowindow.setContent(marker.sisenseTooltip);
-								 infowindow.open(map, marker);
-								 });*/
+								
 
-								//	Creates the clusters markers
-								/*var markerCluster = new MarkerClusterer(map, markers, {
-								 averageCenter : true,
-								 maxZoom : 12,
-								 imagePath: protocol +externalPaths.images.cluster
-								 });
-								 markerCluster.clusterLabel = clusterLabel;*/
+								if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
+									var item = _.find(savedShapesCategory.items, function(item){
+										return item.value == data;
+									});
+									if(item && item.shape) { 
+										item.shape = shape;
+									}
+									else { 
+										savedShapesCategory.items.push({
+											value : qresult[i][4].data,
+											shape: "circle"
+										})
+									}
+								}
+								else if (shapeCategory && qresult[i][4] && qresult[i][4].data) { 
+									var cat = {
+										column : shapeCategory,
+										items : [{
+											value : qresult[i][4].data,
+											shape: "circle"
+										}] 
+									}
+									shapesMetadata.push(cat);
+									savedShapesCategory = cat;
+								}
+							}
+							//END for 
 
-								// adjust info window style, if necessary
-								/*var infowindow = new InfoBox({
-								 closeBoxURL : ""
-								 });*/
+							e.widget.queryMetadata.savedShapes = shapesMetadata;
+							e.widget.changesMade();
 
-								// 	Auto Zoom/Center Map
-								//map.fitBounds(bounds);
-
-								//	Add hover popup for clusters
-								/*google.maps.event.addListener(markerCluster, 'mouseover', function (cluster) {
-								 var sum = 0;
-								 _.each(cluster["markers_"], function (item) {
-								 sum += parseFloat(item["value"]);
-								 });
-								 sum = Math.round(sum);
-								 //infowindow.setContent(cluster.markerClusterer_.clusterLabel + ': ' + formatWithCommas(sum));
-								 //infowindow.open(map);
-								 //infowindow.setPosition(cluster.getCenter());
-								 });
-								 /*
-								 //	Remove hover popup for clusters
-								 google.maps.event.addListener(markerCluster, 'mouseout', function (cluster) {
-								 infowindow.close();
-								 });
-
-								 //	Close any open info windows when clicking on a cluster
-								 google.maps.event.addListener(markerCluster, 'click', function (cluster) {
-								 infowindow.close();
-								 });
-
-								 //	Define function for closing info windows on click
-								 google.maps.closeInfoWindow = function() {
-								 infowindow.close();
-								 };*/
+							if(shapeArray) { 
+								addRowsToShapeBy(shapeArray);
+							}	
 
 							google.maps.event.addListener(map, 'bounds_changed', function() {
 								var bounds = map.getBounds();
@@ -1100,9 +1402,63 @@ prism.registerWidget("googleMaps", {
 									"neLat": NE.lat(),
 									"neLong": NE.lng(),
 									"swLat": SW.lat(),
-									"swLong": SW.lng()
+									"swLong": SW.lng(),
+									"savedShapes" : shapesMetadata
 								};
+								e.widget.changesMade();
 							});
+
+							
+							
+							//Add event listeners to each marker, to popup the info window
+							/*oms.addListener('click', function(marker, event) {		
+
+								infowindow.setContent(marker.sisenseTooltip);
+								infowindow.open(map, marker);
+							});*/
+								
+							//	Creates the clusters markers
+							/*var markerCluster = new MarkerClusterer(map, markers, {
+									averageCenter : true,
+									maxZoom : 12,
+									imagePath: protocol +externalPaths.images.cluster
+								});
+							markerCluster.clusterLabel = clusterLabel;*/
+							
+							// adjust info window style, if necessary
+							/*var infowindow = new InfoBox({							
+								closeBoxURL : ""
+							});*/
+								
+							// 	Auto Zoom/Center Map
+							//map.fitBounds(bounds);
+								
+							//	Add hover popup for clusters
+							/*google.maps.event.addListener(markerCluster, 'mouseover', function (cluster) {
+								var sum = 0;
+								_.each(cluster["markers_"], function (item) {						
+									sum += parseFloat(item["value"]);
+								});
+								sum = Math.round(sum);
+								//infowindow.setContent(cluster.markerClusterer_.clusterLabel + ': ' + formatWithCommas(sum));
+								//infowindow.open(map);
+								//infowindow.setPosition(cluster.getCenter());
+							});
+							/*
+							//	Remove hover popup for clusters
+							google.maps.event.addListener(markerCluster, 'mouseout', function (cluster) {
+								infowindow.close();
+							});
+
+							//	Close any open info windows when clicking on a cluster
+							google.maps.event.addListener(markerCluster, 'click', function (cluster) {
+								infowindow.close();
+							});
+							
+							//	Define function for closing info windows on click
+							google.maps.closeInfoWindow = function() {
+								infowindow.close();
+							};*/
 							
 							google.maps.event.addListener(map, 'zoom_changed', function() {
 								switch(map.getZoom()) {
@@ -1136,310 +1492,298 @@ prism.registerWidget("googleMaps", {
 									}
 								});
 
-								// Create Sidebar rows, tables
 
-								function createSidebarTableHeader(tableId, numCols, headers) {
-									var headerRow = "<tr>";
-									var i = 0;
-									for (i; i < numCols; i++) {
-										if (headers && headers.length > 0 && headers[i]) {
-											headerRow += "<th>" + headers[i] + "</th>";
-										}
-										else {
-											headerRow += "<th></th>";
-										}
+							// Create Sidebar rows, tables
+							function createSidebarTableHeader(tableId, numCols, headers) {
+								var headerRow = "<tr>";
+								var i = 0;
+								for (i; i < numCols; i++) {
+									if (headers && headers.length > 0 && headers[i]) {
+										headerRow += "<th>" + headers[i] + "</th>";
 									}
-									headerRow += "</tr>";
-									$('#'+tableId).append($(headerRow));
-								}
-
-								function createSidebarTableRow(tableId, numCols, headers) {
-									var tableRow = "<tr>";
-									var i = 0;
-									for (i; i < numCols; i++) {
-										if (headers && headers.length > 0 && headers[i]) {
-											tableRow += "<td>" + headers[i] + "</td>";
-										}
-										else {
-											tableRow += "<td></td>";
-										}
-									}
-									tableRow += "</tr>";
-									$('#'+tableId).append($(tableRow));
-								}
-
-								// End Sidebar functionality
-
-								// KML Piece
-								var _presentKMLLayers = [];
-								var _layersClickedOnce = [];
-								var _layerRetries = 0;
-
-								function setKMLLayer(kmlId) {
-									//All US Rail Networks
-									if (kmlId === 0) {
-										//First time click
-										if (!usRailsAdded() && !hasBeenClicked(kmlId)) {
-											$('#KMLLayerCheckBox'+kmlId).css("color", "rgb(247, 149, 72)");
-											for (var i = 0; i < 4; i++) {
-												loadLayer(i);
-											}
-											_layersClickedOnce.push(0)
-										}
-										//Toggle attributes if not first click
-										else {
-											$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-											_.each(_presentKMLLayers, function (loc) {
-												if (loc.kmlId === 0 || loc.kmlId === 1 || loc.kmlId === 2 || loc.kmlId === 3) {
-													loc.checked = !loc.checked;
-													loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
-												}
-											});
-										}
-									}
-									else if (kmlId === 6) {
-										//First time click
-										if (!usRailsAdded() && !hasBeenClicked(kmlId)) {
-											$('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
-											for (var i = 6; i < 15; i++) {
-												loadLayer(i);
-											}
-											_layersClickedOnce.push(6)
-										}
-										//Toggle attributes if not first click
-										else {
-											$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-											_.each(_presentKMLLayers, function (loc) {
-												if (loc.kmlId > 5 && loc.kmlId < 15) {
-													loc.checked = !loc.checked;
-													loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
-												}
-											});
-										}
-									}
-									//Other networks
 									else {
-										//First click
-										if (!layerAdded(kmlId) && !hasBeenClicked(kmlId))
-										{
-											$('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
-											loadLayer(kmlId);
-											_layersClickedOnce.push(kmlId);
+										headerRow += "<th></th>";
+									}
+								}
+								headerRow += "</tr>";
+								$('#'+tableId).append($(headerRow));
+							}
+
+							function createSidebarTableRow(tableId, numCols, headers) {
+								var tableRow = "<tr>";
+								var i = 0;
+								for (i; i < numCols; i++) {
+									if (headers && headers.length > 0 && headers[i]) {
+										tableRow += "<td>" + headers[i] + "</td>";
+									}
+									else {
+										tableRow += "<td></td>";
+									}
+								}
+								tableRow += "</tr>";
+								$('#'+tableId).append($(tableRow));
+							}
+							// End Sidebar functionality
+
+							// KML Piece
+							var _presentKMLLayers = [];
+							var _layersClickedOnce = [];
+							var _layerRetries = 0;
+
+							function setKMLLayer(kmlId) {
+								//All US Rail Networks
+								if (kmlId === 0) {
+									//First time click
+									if (!usRailsAdded() && !hasBeenClicked(kmlId)) {
+										$('#KMLLayerCheckBox'+kmlId).css("color", "rgb(247, 149, 72)");
+										for (var i = 0; i < 4; i++) {
+											loadLayer(i);
 										}
-										//Toggle attributes if not first click
+									}
+								}
+								else if (kmlId === 6) {
+									//First time click
+									if (!usRailsAdded() && !hasBeenClicked(kmlId)) {
+										$('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
+										for (var i = 6; i < 15; i++) {
+											loadLayer(i);
+										}
+										_layersClickedOnce.push(6)
+									}
+									//Toggle attributes if not first click
+									else {
+										$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+										_.each(_presentKMLLayers, function (loc) {
+											if (loc.kmlId > 5 && loc.kmlId < 15) {
+												loc.checked = !loc.checked;
+												loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
+											}
+										});
+									}
+								}
+								//Other networks
+								else {
+									//First click
+									if (!layerAdded(kmlId) && !hasBeenClicked(kmlId))
+									{
+										$('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
+										loadLayer(kmlId);
+										_layersClickedOnce.push(kmlId);
+									}
+									//Toggle attributes if not first click
+									else {
+										//Grab the layer, only reverse attributes if layer exists; if not, just toggle the selection in dropdown
+										var loc = _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId });
+										if (loc) {
+											toggleAttributes(loc, kmlId);
+										}
 										else {
-											//Grab the layer, only reverse attributes if layer exists; if not, just toggle the selection in dropdown
-											var loc = _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId });
-											if (loc) {
-												toggleAttributes(loc, kmlId);
+											toggleSelected(kmlId);
+										}
+									}
+
+								}
+							}
+
+							//Check if the layer has been loaded successfully
+							function layerAdded(kmlId) {
+								return _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId }) ? true : false;
+							}
+
+							//Check if the layer is selected in the dropdown
+							function layerIsSelected(kmlId) {
+								//If a US rail, check if 0 is selected
+								if(kmlId > 5 && kmlId < 15){
+									kmlId = 6;
+								}
+								else if (kmlId < 4){
+									kmlId = 0;
+								}
+								return $('#KMLLayerCheckBox'+kmlId).css("color") === "rgb(247, 149, 72)";
+							}
+
+							//Check that at least one layer exists, showing this has been called before
+							function usRailsAdded() {
+								return _.find(_presentKMLLayers, function (layer) {
+									return layer.kmlId === 0 || layer.kmlId === 1 || layer.kmlId === 2 || layer.kmlId === 3
+								}) ? true : false;
+							}
+
+							//Check if the layer has been selected at least one time
+							function hasBeenClicked(kmlId) {
+								return _layersClickedOnce.indexOf(kmlId) > -1;
+							}
+
+							//Reverse the current attributes of the layer
+							function toggleAttributes(loc, kmlId) {
+								$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+								loc.checked = !loc.checked;
+								loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
+							}
+
+							//Reverse the visibility of the check mark on the dropdown, either 'selecting' or 'unselecting' it.
+							function toggleSelected(kmlId) {
+								$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+							}
+
+							function clearKmlLayers() {
+								$('[id^="KMLLayerCheckBox"]').each(function (item) {
+									$(this).css("visibility", "hidden");
+								});
+								_.each(_presentKMLLayers, function (layer) {
+									layer.kmlLayer.setMap(null);
+									layer.checked = false;
+								});
+							}
+
+							function loadLayer(id) {
+								_isProductionExport = 1;
+								return $.ajax({
+									url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
+									//data: { "id": id },
+									method: "POST",
+									dataType: "JSON"
+								}).done(function (data) {
+									if (data.success) {
+										//var longUrl= "http://" + location.host + "/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
+										// Use for the KML in Sisense
+										var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+										var request = gapi.client.urlshortener.url.insert({
+											'resource': {
+												'longUrl': longUrl
+											}
+										});
+										request.execute(function(response)
+										{
+											if (response && response.id) {
+												var kmlUrl = response.id;
+												var kmlLayer = new google.maps.KmlLayer({
+													url: kmlUrl,
+													map: map,
+													preserveViewport: true
+												});
+
+												//Error handling
+												//If fails, just try again, up to 10 times
+												setTimeout(function () {
+													if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {
+														var item = {
+															kmlLayer: kmlLayer,
+															kmlId: id,
+															checked: true
+														};
+														if (!layerIsSelected(id)) {
+															item.kmlLayer.setMap(null);
+															item.checked = false;
+														}
+														_presentKMLLayers.push(item);
+													}
+													else {
+														if (_layerRetries < 10) {
+															console.warn('KML layer not added [' + id + ']. Trying again.');
+															loadLayer(id);
+															_layerRetries += 1;
+														}
+													}
+												}, 30000);
 											}
 											else {
-												toggleSelected(kmlId);
+												console.warn('Google API failed.');
 											}
-										}
-
-									}
-								}
-
-								//Check if the layer has been loaded successfully
-								function layerAdded(kmlId) {
-									return _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId }) ? true : false;
-								}
-
-								//Check if the layer is selected in the dropdown
-								function layerIsSelected(kmlId) {
-									//If a US rail, check if 0 is selected
-									if(kmlId > 5 && kmlId < 15){
-										kmlId = 6;
-									}
-									else if (kmlId < 4){
-										kmlId = 0;
-									}
-									return $('#KMLLayerCheckBox'+kmlId).css("color") === "rgb(247, 149, 72)";
-								}
-
-								//Check that at least one layer exists, showing this has been called before
-								function usRailsAdded() {
-									return _.find(_presentKMLLayers, function (layer) {
-										return layer.kmlId === 0 || layer.kmlId === 1 || layer.kmlId === 2 || layer.kmlId === 3
-									}) ? true : false;
-								}
-
-								//Check if the layer has been selected at least one time
-								function hasBeenClicked(kmlId) {
-									return _layersClickedOnce.indexOf(kmlId) > -1;
-								}
-
-								//Reverse the current attributes of the layer
-								function toggleAttributes(loc, kmlId) {
-									$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-									loc.checked = !loc.checked;
-									loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
-								}
-
-								//Reverse the visibility of the check mark on the dropdown, either 'selecting' or 'unselecting' it.
-								function toggleSelected(kmlId) {
-									$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-								}
-
-								function clearKmlLayers() {
-									$('[id^="KMLLayerCheckBox"]').each(function (item) {
-										$(this).css("visibility", "hidden");
-									});
-									_.each(_presentKMLLayers, function (layer) {
-										layer.kmlLayer.setMap(null);
-										layer.checked = false;
-									});
-								}
-
-								function loadLayer(id) {
-									_isProductionExport = 1;
-									return $.ajax({
-										url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
-										//data: { "id": id },
-										method: "POST",
-										dataType: "JSON"
-									}).done(function (data) {
-										if (data.success) {
-											//var longUrl= "http://" + location.host + "/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
-											// Use for the KML in Sisense
-											var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
-											var request = gapi.client.urlshortener.url.insert({
-												'resource': {
-													'longUrl': longUrl
-												}
-											});
-											request.execute(function(response)
-											{
-												if (response && response.id) {
-													var kmlUrl = response.id;
-													var kmlLayer = new google.maps.KmlLayer({
-														url: kmlUrl,
-														map: map,
-														preserveViewport: true
-													});
-
-													//Error handling
-													//If fails, just try again, up to 10 times
-													setTimeout(function () {
-														if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {
-															var item = {
-																kmlLayer: kmlLayer,
-																kmlId: id,
-																checked: true
-															};
-															if (!layerIsSelected(id)) {
-																item.kmlLayer.setMap(null);
-																item.checked = false;
-															}
-															_presentKMLLayers.push(item);
-														}
-														else {
-															if (_layerRetries < 10) {
-																console.warn('KML layer not added [' + id + ']. Trying again.');
-																loadLayer(id);
-																_layerRetries += 1;
-															}
-														}
-													}, 30000);
-												}
-												else {
-													console.warn('Google API failed.');
-												}
-											});
-										}
-									});
-								}
-
-
-								var kmlLayers = [
-									{
-										id: 5,
-										title: 'Proppant Mine Locations'
-									},
-									{
-										id: 4,
-										title: 'Transload Terminal Locations'
-									},
-									{
-										id: 0,
-										title: 'US Rail Network'
-									},
-									{
-										id: 6,
-										title: 'Eagleford Basin'
-									}
-								];
-
-								var _kmlControlsShowing = false;
-								function CenterControl(controlDiv, map) {
-
-									// Set CSS for the control border.
-									var control = document.createElement('div');
-									control.id = "KMLLayerButtonGroup";
-									controlDiv.appendChild(control);
-
-									// Set list
-									var ul = document.createElement('ul');
-									ul.className = "dropdown-memu";
-
-									var controlHide = document.createElement('li');
-									controlHide.id = "KMLLayerButtonGroupHide";
-									controlHide.innerHTML = "KML Layer Selection"
-
-									var iRight = document.createElement('i');
-									iRight.className = "fa fa-chevron-down";
-									controlHide.appendChild(iRight);
-
-									ul.appendChild(controlHide);
-
-									controlHide.addEventListener('click', function () {
-										if (_kmlControlsShowing) {
-											iRight.className = "fa fa-chevron-down";
-											var x = document.getElementsByClassName("kmlItem");
-											var i;
-											for (i = 0; i < x.length; i++) {
-												x[i].style.display = "none";
-											}
-											_kmlControlsShowing = false;
-										}
-										else {
-											iRight.className = "fa fa-chevron-up";
-											var x = document.getElementsByClassName("kmlItem");
-											var i;
-											for (i = 0; i < x.length; i++) {
-												x[i].style.display = "";
-											}
-											_kmlControlsShowing = true;
-										}
-									});
-
-									_.each(kmlLayers, function (layer) {
-										var li = document.createElement('li');
-										li.className = "kmlItem"
-										li.style.display = "none";
-										var a = document.createElement('a');
-										a.id = "KMLLayerCheckBox" + layer.id;
-
-										// Setup the click event listeners: simply set the map to Chicago.
-										a.addEventListener('click', function () {
-											setKMLLayer(layer.id);
 										});
+									}
+								});
+							}
 
-										a.innerHTML = layer.title;
 
-										li.appendChild(a);
-										ul.appendChild(li);
+							var kmlLayers = [
+								{
+									id: 5,
+									title: 'Proppant Mine Locations'
+								},
+								{
+									id: 4,
+									title: 'Transload Terminal Locations'
+								},
+								{
+									id: 0,
+									title: 'US Rail Network'
+								},
+								{
+									id: 6,
+									title: 'Eagleford Basin'
+								}
+							];
+
+							var _kmlControlsShowing = false;
+							function CenterControl(controlDiv, map) {
+
+								// Set CSS for the control border.
+								var control = document.createElement('div');
+								control.id = "KMLLayerButtonGroup";
+								controlDiv.appendChild(control);
+
+								// Set list
+								var ul = document.createElement('ul');
+								ul.className = "dropdown-memu";
+
+								var controlHide = document.createElement('li');
+								controlHide.id = "KMLLayerButtonGroupHide";
+								controlHide.innerHTML = "KML Layer Selection"
+
+								var iRight = document.createElement('i');
+								iRight.className = "fa fa-chevron-down";
+								controlHide.appendChild(iRight);
+
+								ul.appendChild(controlHide);
+
+								controlHide.addEventListener('click', function () {
+									if (_kmlControlsShowing) {
+										iRight.className = "fa fa-chevron-down";
+										var x = document.getElementsByClassName("kmlItem");
+										var i;
+										for (i = 0; i < x.length; i++) {
+											x[i].style.display = "none";
+										}
+										_kmlControlsShowing = false;
+									}
+									else {
+										iRight.className = "fa fa-chevron-up";
+										var x = document.getElementsByClassName("kmlItem");
+										var i;
+										for (i = 0; i < x.length; i++) {
+											x[i].style.display = "";
+										}
+										_kmlControlsShowing = true;
+									}
+								});
+
+								_.each(kmlLayers, function (layer) {
+									var li = document.createElement('li');
+									li.className = "kmlItem"
+									li.style.display = "none";
+									var a = document.createElement('a');
+									a.id = "KMLLayerCheckBox" + layer.id;
+
+									// Setup the click event listeners: simply set the map to Chicago.
+									a.addEventListener('click', function () {
+										setKMLLayer(layer.id);
 									});
 
-									control.appendChild(ul);
+									a.innerHTML = layer.title;
 
-								}
+									li.appendChild(a);
+									ul.appendChild(li);
+								});
 
-								var controlDiv = document.createElement('div');
-								CenterControl(controlDiv, map);
-								controlDiv.index = 1;
-								map.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+								control.appendChild(ul);
+
+							}
+
+							var controlDiv = document.createElement('div');
+							CenterControl(controlDiv, map);
+							controlDiv.index = 1;
+							map.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
 							});
 						});
 						console.log("Complete map 1");
