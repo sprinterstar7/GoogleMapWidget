@@ -1067,7 +1067,7 @@ prism.registerWidget("googleMaps", {
 								+ '<span class="tabDivider"></span>'
 								+ '<span class="inactive" id="shapeLegend">Shape by</span>'
 							+ '</div>'));
-							$('#mapSidebarContent').append($('<div id="mapColorLegendContent">some color legend stuff</div>'));
+							$('#mapSidebarContent').append($('<div id="mapColorLegendContent"></div>'));
 							$('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
 
 							$('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody></tbody></table>'));
@@ -1119,59 +1119,6 @@ prism.registerWidget("googleMaps", {
 									}
 								};
 							}
-							
-							// Draw Manager
-							var _drawManager = new google.maps.drawing.DrawingManager({
-								drawingControl: true,
-								drawingControlOptions: {
-									position: google.maps.ControlPosition.TOP_CENTER,
-									drawingModes: [
-										google.maps.drawing.OverlayType.POLYGON
-										, google.maps.drawing.OverlayType.CIRCLE
-										, google.maps.drawing.OverlayType.RECTANGLE
-										, google.maps.drawing.OverlayType.POLYLINE
-									]
-								},
-								circleOptions: {
-									fillColor: '#d22927',
-									fillOpacity: 0.5,
-									strokeWeight: 1,
-									strokeColor: '#000000',
-									clickable: true,
-									editable: false,
-									suppressUndo: true
-								},
-								rectangleOptions: {
-									fillColor: '#d22927',
-									fillOpacity: 0.5,
-									strokeWeight: 1,
-									strokeColor: '#000000',
-									clickable: true,
-									editable: false,
-									draggable: false,
-									suppressUndo: true
-								},
-								polygonOptions: {
-									fillColor: '#d22927',
-									fillOpacity: 0.5,
-									strokeWeight: 1,
-									strokeColor: '#000000',
-									clickable: true,
-									editable: false,
-									draggable: false,
-									suppressUndo: true
-								},
-								polylineOptions: {
-									fillColor: '#d22927',
-									fillOpacity: 0.5,
-									strokeWeight: 3,
-									clickable: true,
-									editable: false,
-									draggable: true,
-									suppressUndo: true
-								}
-							});
-							_drawManager.setMap(map);
 							
 							//	Define bounding object (for auto zoom/center)
 							var bounds = new google.maps.LatLngBounds();
