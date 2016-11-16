@@ -1172,41 +1172,40 @@ prism.registerWidget("googleMaps", {
 
 								//	Add the rest of data to be presented in the info window
 								var measureIndex = 2;
-									j = measureIndex;
-									for (; j < headersSize; j++) {
-										markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
-									}
-									markerText += ' </span>';
+								j = measureIndex;
+								for (; j < headersSize; j++) {
+									markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
+								}
+								markerText += ' </span>';
 
-									//	Get the latitude and longitude for this marker
-									var lat = parseFloat(qresult[i][0]["data"]); // latitude
-									var lng = parseFloat(qresult[i][1]["data"]); // longitude
-									if(isNaN(lat) || isNaN(lng)) continue;
+								//	Get the latitude and longitude for this marker
+								var lat = parseFloat(qresult[i][0]["data"]); // latitude
+								var lng = parseFloat(qresult[i][1]["data"]); // longitude
+								if(isNaN(lat) || isNaN(lng)) continue;
 
-									//	Get the measure label for the clusters
-									if (!clusterLabel) {
-										clusterLabel = headers[measureIndex];
-									}
+								//	Get the measure label for the clusters
+								if (!clusterLabel) {
+									clusterLabel = headers[measureIndex];
+								}
 
-									//	Determine the marker color from Sisense, or use the default
-									var pinColor = '#00A0DC';
-									if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
-										pinColor = qresult[i][3].color;//.replace("#","");
-										if ( colors[pinColor] === undefined )
-											colors[pinColor] = createMarker(10, pinColor);
-									}
+								//	Determine the marker color from Sisense, or use the default
+								var pinColor = '#00A0DC';
+								if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
+									pinColor = qresult[i][3].color;//.replace("#","");
+									if ( colors[pinColor] === undefined )
+										colors[pinColor] = createMarker(10, pinColor);
+								}
 
-									//	Create the marker image and shadow
-									/*var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
-									 new google.maps.Size(21, 34),
-									 new google.maps.Point(0,0),
-									 new google.maps.Point(10, 34));
-									 /*var pinShadow = new google.maps.MarkerImage(protocol + externalPaths.images.pinShadow,
-									 new google.maps.Size(40, 37),
-									 new google.maps.Point(0, 0),
-									 new google.maps.Point(12, 35));*/
+								//	Create the marker image and shadow
+								/*var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
+									new google.maps.Size(21, 34),
+									new google.maps.Point(0,0),
+									new google.maps.Point(10, 34));
+									/*var pinShadow = new google.maps.MarkerImage(protocol + externalPaths.images.pinShadow,
+									new google.maps.Size(40, 37),
+									new google.maps.Point(0, 0),
+									new google.maps.Point(12, 35));*/
 
-									// Create the marker
 								var shape = "circle";
 								if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
 									var item = _.find(savedShapesCategory.items, function(item) { 
@@ -1216,16 +1215,6 @@ prism.registerWidget("googleMaps", {
 										shape = item.shape;
 									}
 								}
-
-								//	Create the marker image and shadow
-								/*var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
-									new google.maps.Size(21, 34),
-									new google.maps.Point(0,0),
-									new google.maps.Point(10, 34));
-								/*var pinShadow = new google.maps.MarkerImage(protocol + externalPaths.images.pinShadow,
-									new google.maps.Size(40, 37),
-									new google.maps.Point(0, 0),
-									new google.maps.Point(12, 35));*/
 
 								// Create the marker
 								var marker; 
