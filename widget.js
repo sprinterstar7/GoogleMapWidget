@@ -938,6 +938,15 @@ prism.registerWidget("googleMaps", {
 								return field;
 							}
 
+							function getFieldFromItems(field,items) {
+								return _.find(items,function(item){
+									if($$get(item,"jaql.dim") &&
+										((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
+										return item;
+									}
+								});
+							}
+
 							var availableShapes = [
 								'square'
 								,'diamond'
@@ -1121,15 +1130,6 @@ prism.registerWidget("googleMaps", {
 							});   
 
 							//Map Side Bar End
-
-							function getFieldFromItems(field,items) {
-								return _.find(items,function(item){
-									if($$get(item,"jaql.dim") &&
-										((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
-										return item;
-									}
-								});
-							}
 
 							function createFieldToFilterPanel(fieldName){
 								return {
