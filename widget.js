@@ -254,55 +254,55 @@ prism.registerWidget("googleMaps", {
 					console.log('Total Rows: ' + result[0].data);
 			}, 'json');*/
 
-			$.ajax({
-				type: 'POST',
-				url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
-				data: JSON.stringify(testQuery),
-				success: function(data) {
-					var result = data.values[0];
-					var count = (result.length === undefined) ? result.data : result[0].data;
+			// $.ajax({
+			// 	type: 'POST',
+			// 	url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
+			// 	data: JSON.stringify(testQuery),
+			// 	success: function(data) {
+			// 		var result = data.values[0];
+			// 		var count = (result.length === undefined) ? result.data : result[0].data;
 
-					if (count > query.count) {
-						//console.log(count);
-						var column = 0;
-						try {
-							switch(widget.mapSettings.zoomLevel)
-							{
-								case 6:
-								case 7:
-								case 8:
-								case 9:
-								case 10: 
-								case 11:
-								case 12: column = "1";
-									break;
-								case 13:
-								case 14:
-								case 15: 
-								case 16: column = "2";
-									break;
-								case 17:
-								case 18:
-								case 19:
-								case 20: column = "3";
-									break;
-								default: // Map's first load
-										column = "-1";
-									break;
-							}
-						}
-						catch(err) {};
-						query.metadata[0].jaql.column = "Latitude" + column;
-						query.metadata[0].jaql.title = "Latitude" + column;
-						query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
-						query.metadata[1].jaql.column = "Longitude" + column;
-						query.metadata[1].jaql.title = "Longitude" + column;
-						query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
-					}
-				},
-				dataType: 'json',
-				async: false
-			});
+			// 		if (count > query.count) {
+			// 			//console.log(count);
+			// 			var column = 0;
+			// 			try {
+			// 				switch(widget.mapSettings.zoomLevel)
+			// 				{
+			// 					case 6:
+			// 					case 7:
+			// 					case 8:
+			// 					case 9:
+			// 					case 10: 
+			// 					case 11:
+			// 					case 12: column = "1";
+			// 						break;
+			// 					case 13:
+			// 					case 14:
+			// 					case 15: 
+			// 					case 16: column = "2";
+			// 						break;
+			// 					case 17:
+			// 					case 18:
+			// 					case 19:
+			// 					case 20: column = "3";
+			// 						break;
+			// 					default: // Map's first load
+			// 							column = "-1";
+			// 						break;
+			// 				}
+			// 			}
+			// 			catch(err) {};
+			// 			query.metadata[0].jaql.column = "Latitude" + column;
+			// 			query.metadata[0].jaql.title = "Latitude" + column;
+			// 			query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
+			// 			query.metadata[1].jaql.column = "Longitude" + column;
+			// 			query.metadata[1].jaql.title = "Longitude" + column;
+			// 			query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
+			// 		}
+			// 	},
+			// 	dataType: 'json',
+			// 	async: false
+			// });
 
 			return query;
 		},
@@ -786,7 +786,7 @@ prism.registerWidget("googleMaps", {
 										fillColor: '#d22927',
 										fillOpacity: 0.5,
 										strokeWeight: 1,
-										strokeColor: '#000000',
+										strokeColor: '#cccccc',
 										clickable: true,
 										editable: false,
 										suppressUndo: true
@@ -795,7 +795,7 @@ prism.registerWidget("googleMaps", {
 										fillColor: '#d22927',
 										fillOpacity: 0.5,
 										strokeWeight: 1,
-										strokeColor: '#000000',
+										strokeColor: '#cccccc',
 										clickable: true,
 										editable: false,
 										draggable: false,
@@ -805,27 +805,236 @@ prism.registerWidget("googleMaps", {
 										fillColor: '#d22927',
 										fillOpacity: 0.5,
 										strokeWeight: 1,
-										strokeColor: '#000000',
+										strokeColor: '#cccccc',
 										clickable: true,
 										editable: false,
 										draggable: false,
 										suppressUndo: true
 									},
 									polylineOptions: {
-										fillColor: '#d22927',
+										fillColor: '#dddddd',
 										fillOpacity: 0.5,
 										strokeWeight: 3,
+										strokeColor: '#cccccc',
 										clickable: true,
 										editable: false,
 										draggable: true,
 										suppressUndo: true
 									}
 								});
-								_drawManager.setMap(map);
+								_drawManager.setMap(map);							
+							
+							var overlays = [];
+							if(e.widget.queryMetadata.overlays) {
+								overlays = e.widget.queryMetadata.overlays;
+							};
 
-								google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
-									updateWellIDFilter(event);
-								});
+							//For testing purposes
+							// e.widget.queryMetadata.overlays = [];
+							// e.widget.changesMade();
+							// overlays = [];
+
+							google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
+								updateWellIDFilter(event);
+								var overlay;
+								if(event.dontAdd) { 
+									
+								}
+								else if(event.type != google.maps.drawing.OverlayType.POLYLINE) { 
+									if(event.type == google.maps.drawing.OverlayType.RECTANGLE) { 
+										overlay = { 
+											type: event.type,
+											bounds: event.overlay.bounds
+										}
+									}
+									else if(event.type == google.maps.drawing.OverlayType.CIRCLE) { 
+										overlay = { 
+											type: event.type,
+											radius: event.overlay.radius,
+											center: { lat: event.overlay.center.lat(), lng: event.overlay.center.lng() } 
+										}
+									}
+									else if(event.type == google.maps.drawing.OverlayType.POLYGON) { 
+										console.log(event);
+										overlay = { 
+											type: event.type,
+											latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
+										}
+									}
+									// else if(event.type == google.maps.drawing.OverlayType.POLYLINE) { 
+									// 	overlay = { 
+									// 		type: event.type,
+									// 		latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
+									// 	}
+									// }
+									overlays.push(overlay);
+									e.widget.queryMetadata.overlays = overlays;
+									e.widget.changesMade();
+								}
+								 event.overlay.addListener('rightclick', function () {
+									 eraseShape(event);
+								 });
+							});
+
+							if(overlays) { 
+								_.each(overlays, function(overlay){
+									 switch (overlay.type) {
+										case google.maps.drawing.OverlayType.CIRCLE:
+										
+											var testCircle = new google.maps.Circle({
+												center: getCircleCenterLatLng(overlay.center),
+												radius: overlay.radius,
+												fillColor: '#d22927',
+												fillOpacity: .5,
+												strokeWeight: 1,
+												strokeColor: '#cccccc',
+												clickable: true,
+												editable: false,
+												draggable: false,
+												suppressUndo: true,
+												map: map
+											});
+
+											var o = {
+												overlay: testCircle,
+												type: google.maps.drawing.OverlayType.CIRCLE,
+												dontAdd: true
+                   							 };
+
+											google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
+											break;
+										case google.maps.drawing.OverlayType.RECTANGLE:
+
+											var rectBounds = getCoordinateLatLng(overlay.bounds);
+
+											var testRectangle = new google.maps.Rectangle({
+												fillColor: '#d22927',
+												fillOpacity: .5,
+												strokeWeight: 1,
+												strokeColor:'#cccccc',
+												clickable: true,
+												editable: false,
+												draggable: false,
+												suppressUndo: true,
+												map: map,
+												bounds: new google.maps.LatLngBounds(rectBounds[0], rectBounds[1])
+											});
+
+											var o = {
+												overlay: testRectangle,
+												type: google.maps.drawing.OverlayType.RECTANGLE,
+												dontAdd: true
+                   							 };
+
+											google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
+											break;
+										case google.maps.drawing.OverlayType.POLYGON:
+
+											var testPolygon = new google.maps.Polygon({
+												paths: google.maps.geometry.encoding.decodePath(overlay.latLngs),
+												fillColor:  '#d22927',
+												fillOpacity: .5,
+												strokeWeight: 1,
+												strokeColor: '#cccccc',
+												clickable: true,
+												editable: false,
+												draggable: false,
+												suppressUndo: true,
+												map: map
+											});
+
+											var o = {
+												overlay: testPolygon,
+												type: google.maps.drawing.OverlayType.POLYGON,
+												dontAdd: true
+                   							 };
+
+											google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
+											break;
+										// case google.maps.drawing.OverlayType.POLYLINE:
+
+										// 	var testPolygon = new google.maps.Polyline({
+										// 		paths: google.maps.geometry.encoding.decodePath(overlay.latLngs),
+										// 		fillColor:  '#dddddd',
+										// 		fillOpacity: .5,
+										// 		strokeWeight: 1,
+										// 		strokeColor: '#dddddd',
+										// 		clickable: true,
+										// 		editable: false,
+										// 		draggable: false,
+										// 		suppressUndo: true,
+										// 		map: map
+										// 	});
+
+										// 	var o = {
+										// 		overlay: testPolygon,
+										// 		type: google.maps.drawing.OverlayType.POLYLINE,
+										// 		dontAdd: true
+                   						// 	 };
+
+										// 	google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
+										// 	break;
+									}
+								})
+							}
+
+							function getCircleCenterLatLng(center) {
+										return new google.maps.LatLng(center.lat, center.lng);
+							}
+
+
+							function getCoordinateLatLng(bounds) {
+								var toReturn = [];
+									toReturn.push(new google.maps.LatLng(bounds.f.f, bounds.b.b));
+									toReturn.push(new google.maps.LatLng(bounds.f.b, bounds.b.f));
+								return toReturn;
+							}
+
+							function eraseShape(event) { 
+								 event.overlay.setMap(null);
+								 delete event;
+								 
+								switch (event.type) {
+										case 'circle':
+											var center = { lat: event.overlay.center.lat(), lng: event.overlay.center.lng() };
+											var radius = event.overlay.radius;
+											overlays = _.reject(overlays, function(overlay) { 
+												return overlay.type == 'circle' 
+												&& overlay.center.lat == center.lat 
+												&& overlay.center.lng == center.lng 
+												&& overlay.radius == radius;
+											});
+											break;
+										case 'rectangle':
+											overlays = _.reject(overlays, function(overlay) { 
+												return overlay.type == 'rectangle' 
+												&& overlay.bounds.b.b == event.overlay.bounds.b.b
+												&& overlay.bounds.b.f == event.overlay.bounds.b.f
+												&& overlay.bounds.f.b == event.overlay.bounds.f.b
+												&& overlay.bounds.f.f == event.overlay.bounds.f.f
+											});
+
+											removeWellIDFilter(event);
+											break;
+										case 'polygon':
+											var path = google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray());
+											overlays = _.reject(overlays, function(overlay) { 
+												return overlay.type == 'polygon' 
+												&& overlay.latLngs == path;
+											});
+											break;
+										// case 'polyline':
+										// 	var path = google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray());
+										// 	overlays = _.reject(overlays, function(overlay) { 
+										// 		return overlay.type == 'polyline' 
+										// 		&& overlay.latLngs == path;
+										// 	});
+										// 	break;
+									}
+								e.widget.queryMetadata.overlays = overlays;
+								e.widget.changesMade();
+							}
+
 
 							function updateWellIDFilter(event){
 								if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
@@ -844,16 +1053,16 @@ prism.registerWidget("googleMaps", {
 									};
 
 									//  Set via JavaScript API
-									prism.activeDashboard.filters.update(wellField,options);
+									// prism.activeDashboard.filters.update(wellField,options);
 
-									//  Make sure the widgets get refreshed
-									var refreshDashboard = function(){
-										$.each(prism.activeDashboard.widgets.$$widgets,function(){
-											this.refresh();
-										})
-									};
+									// //  Make sure the widgets get refreshed
+									// var refreshDashboard = function(){
+									// 	$.each(prism.activeDashboard.widgets.$$widgets,function(){
+									// 		this.refresh();
+									// 	})
+									// };
 
-									setTimeout(refreshDashboard,500);
+									//setTimeout(refreshDashboard,500);
 								}
 							}
 
@@ -896,7 +1105,6 @@ prism.registerWidget("googleMaps", {
 								});
 							}
 
-
 							function createDashFilter(name,filterFields,from,to){
 								var field = getFieldFromItems(name, filterFields);
 
@@ -913,6 +1121,77 @@ prism.registerWidget("googleMaps", {
 										((item.jaql.column).toLowerCase() ===  (field).toLowerCase())){
 										return item;
 									}
+								});
+							}
+
+							function removeWellIDFilter(event){
+								if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
+									var wellFieldName = "Well Unique Id",
+										filterFields = prism.activeDashboard.filters.$$items,
+										bounds = event.overlay.bounds;
+
+									var wellField = createDashFilter(wellFieldName,filterFields);
+
+									// Add the lat and long as attributes
+									removeLatLngOrAttribute(wellField,bounds);
+
+									var options = {
+										save: false,
+										refresh: false
+									};
+
+									//  Set via JavaScript API
+									// prism.activeDashboard.filters.update(wellField,options);
+
+									// //  Make sure the widgets get refreshed
+									// var refreshDashboard = function(){
+									// 	$.each(prism.activeDashboard.widgets.$$widgets,function(){
+									// 		this.refresh();
+									// 	})
+									// };
+
+									//setTimeout(refreshDashboard,500);
+								}
+							}
+
+							function removeLatLngOrAttribute(wellField,bounds){
+								var latItem = {"attributes":[{
+									"table": "Well",
+									"column": "Latitude",
+									"dim": "[Well.Latitude]",
+									"datatype": "numeric",
+									"title": "Latitude",
+									"collapsed": true,
+									"filter": {
+										"and":[{
+											"fromNotEqual": bounds.f.f
+										}, {
+											"toNotEqual": bounds.f.b
+										}
+										]
+									}
+								}]};
+								var lngItem = {"attributes":[{
+									"table": "Well",
+									"column": "Longitude",
+									"dim": "[Well.Longitude]",
+									"datatype": "numeric",
+									"title": "Longitude",
+									"collapsed": true,
+									"filter": {
+										"and":[{
+											"fromNotEqual": bounds.b.b
+										}, {
+											"toNotEqual": bounds.b.f
+										}
+										]
+									}
+								}]};
+								
+								wellField.jaql.filter.or = _.reject(wellField.jaql.filter.or, function(filter){
+										return filter[0] && filters[1] 
+										&& JSON.stringify(filter[0]) ==  JSON.stringify(latItem)
+										&& JSON.stringify(filter[1]) ==  JSON.stringify(lngItem)
 								});
 							}
 
