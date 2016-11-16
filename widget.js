@@ -254,55 +254,55 @@ prism.registerWidget("googleMaps", {
 					console.log('Total Rows: ' + result[0].data);
 			}, 'json');*/
 
-			// $.ajax({
-			// 	type: 'POST',
-			// 	url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
-			// 	data: JSON.stringify(testQuery),
-			// 	success: function(data) {
-			// 		var result = data.values[0];
-			// 		var count = (result.length === undefined) ? result.data : result[0].data;
+			$.ajax({
+				type: 'POST',
+				url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
+				data: JSON.stringify(testQuery),
+				success: function(data) {
+					var result = data.values[0];
+					var count = (result.length === undefined) ? result.data : result[0].data;
 
-			// 		if (count > query.count) {
-			// 			//console.log(count);
-			// 			var column = 0;
-			// 			try {
-			// 				switch(widget.mapSettings.zoomLevel)
-			// 				{
-			// 					case 6:
-			// 					case 7:
-			// 					case 8:
-			// 					case 9:
-			// 					case 10: 
-			// 					case 11:
-			// 					case 12: column = "1";
-			// 						break;
-			// 					case 13:
-			// 					case 14:
-			// 					case 15: 
-			// 					case 16: column = "2";
-			// 						break;
-			// 					case 17:
-			// 					case 18:
-			// 					case 19:
-			// 					case 20: column = "3";
-			// 						break;
-			// 					default: // Map's first load
-			// 							column = "-1";
-			// 						break;
-			// 				}
-			// 			}
-			// 			catch(err) {};
-			// 			query.metadata[0].jaql.column = "Latitude" + column;
-			// 			query.metadata[0].jaql.title = "Latitude" + column;
-			// 			query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
-			// 			query.metadata[1].jaql.column = "Longitude" + column;
-			// 			query.metadata[1].jaql.title = "Longitude" + column;
-			// 			query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
-			// 		}
-			// 	},
-			// 	dataType: 'json',
-			// 	async: false
-			// });
+					if (count > query.count) {
+						//console.log(count);
+						var column = 0;
+						try {
+							switch(widget.mapSettings.zoomLevel)
+							{
+								case 6:
+								case 7:
+								case 8:
+								case 9:
+								case 10: 
+								case 11:
+								case 12: column = "1";
+									break;
+								case 13:
+								case 14:
+								case 15: 
+								case 16: column = "2";
+									break;
+								case 17:
+								case 18:
+								case 19:
+								case 20: column = "3";
+									break;
+								default: // Map's first load
+										column = "-1";
+									break;
+							}
+						}
+						catch(err) {};
+						query.metadata[0].jaql.column = "Latitude" + column;
+						query.metadata[0].jaql.title = "Latitude" + column;
+						query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
+						query.metadata[1].jaql.column = "Longitude" + column;
+						query.metadata[1].jaql.title = "Longitude" + column;
+						query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
+					}
+				},
+				dataType: 'json',
+				async: false
+			});
 
 			return query;
 		},
