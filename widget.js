@@ -818,37 +818,43 @@ prism.registerWidget("googleMaps", {
 								});
 								_drawManager.setMap(map);
 
+
 								google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
 									updateWellIDFilter(event);
 								});
 
 								function updateWellIDFilter(event){
-									if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
+									if (event.type == google.maps.drawing.OverlayType.RECTANGLE ||
+										event.type == google.maps.drawing.OverlayType.CIRCLE){
 										var wellFieldName = "Well Unique Id",
 											filterFields = prism.activeDashboard.filters.$$items,
 											bounds = event.overlay.bounds;
 
 										var wellField = createDashFilter(wellFieldName,filterFields);
 
-										// Add the lat and long as attributes
-										addLatLngOrAttribute(wellField,bounds);
+										if (event.type == google.maps.drawing.OverlayType.RECTANGLE ){
+											// Add the lat and long as attributes
+											addLatLngOrAttribute(wellField,bounds);
+										} else {
+											addCircleFilter(wellField,event);
+										}
 
 										var options = {
-											save: false,
+											save: true,
 											refresh: false
 										};
 
 										//  Set via JavaScript API
 										prism.activeDashboard.filters.update(wellField,options);
 
-										//  Make sure the widgets get refreshed
-										var refreshDashboard = function(){
-											$.each(prism.activeDashboard.widgets.$$widgets,function(){
-												this.refresh();
-											})
-										};
+										// //  Make sure the widgets get refreshed
+										// var refreshDashboard = function(){
+										// 	$.each(prism.activeDashboard.widgets.$$widgets,function(){
+										// 		this.refresh();
+										// 	})
+										// };
 
-										setTimeout(refreshDashboard,500);
+										// setTimeout(refreshDashboard,500);
 									}
 								}
 
@@ -869,6 +875,7 @@ prism.registerWidget("googleMaps", {
 											]
 										}
 									}]};
+
 									var lngItem = {"attributes":[{
 										"table": "Well",
 										"column": "Longitude",
@@ -892,6 +899,12 @@ prism.registerWidget("googleMaps", {
 								}
 
 
+								function addCircleFilter(wellField,event){
+									wellField.jaql.filter.or.push(createCircleFilter(event.overlay.center.lat(),
+										event.overlay.center.lng(),
+										event.overlay.radius));
+								}
+
 								function createDashFilter(name,filterFields,from,to){
 									var field = getFieldFromItems(name, filterFields);
 
@@ -911,6 +924,34 @@ prism.registerWidget("googleMaps", {
 									});
 								}
 
+								function createCircleFilter(centerLat,centerLng,redius){
+									return {
+										"measure": {
+
+											"formula": "12742*asin(SQRT(0.5-cos((([lat]-" + centerLat + ")*0.017453292519943295))/2+cos(" + centerLat + "*0.017453292519943295)*cos([lat]*0.017453292519943295)*(1-cos((([lng]-" + centerLng + ")*0.017453292519943295)))/2))",
+											"context": {
+												"[lng]": {
+													"table": "Well",
+													"column": "Longitude",
+													"dim": "[Well.Longitude]",
+													"datatype": "numeric",
+													"agg": "sum",
+													"title": "Total Longitude"
+												},
+												"[lat]": {
+													"table": "Well",
+													"column": "Latitude",
+													"dim": "[Well.Latitude]",
+													"datatype": "numeric",
+													"agg": "sum",
+													"title": "Total Latitude"
+												}
+											}
+										},
+										"toNotEqual" : (redius/1000).toString()
+									};
+								}
+
 								function createFieldToFilterPanel(fieldName){
 									return {
 										"jaql": {
@@ -920,7 +961,8 @@ prism.registerWidget("googleMaps", {
 											"datatype": "numeric",
 											"title": fieldName,
 											"filter": {
-												"or": []
+												"or": [],
+												"custom": true
 											}
 										}
 									};
