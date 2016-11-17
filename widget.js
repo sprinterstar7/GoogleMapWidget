@@ -370,8 +370,8 @@ prism.registerWidget("googleMaps", {
 				async: false
 			});
 
-			return query;
-		},
+		return query;
+	    },
 
 		// prepares the widget-specific query result from the given result data-table
 		processResult : function (widget, queryResult) {
@@ -973,6 +973,13 @@ prism.registerWidget("googleMaps", {
 								_drawManager.setMap(map);							
 							
 							var overlays = [];
+							if(e.widget.queryMetadata) { 
+								//Do nothing
+							} else { 
+								e.widget.queryMetadata = { };
+								e.widget.changesMade();
+							}
+
 							if(e.widget.queryMetadata.overlays) {
 								overlays = e.widget.queryMetadata.overlays;
 							};
