@@ -236,71 +236,135 @@ prism.registerWidget("googleMaps", {
 				item.panel = "scope";
 
 				query.metadata.push(item);
-				testQuery.metadata.push(item);
+				testQuery.metadata.push({"panel": "scope", "jaql": item.jaql});
 			});
 			
 			// Dashboard filters
 			prism.activeDashboard.filters.flatten().forEach(function (object) {
+				object.panel = "scope";
 				testQuery.metadata.push(object);
 			});
 			
-			/*
-			$.post(encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'), JSON.stringify(testQuery), function(data) {
-				var result = data.values[0];
-				
-				if (result.length === undefined)
-					console.log('Total Rows: ' + result.data);
-				else
-					console.log('Total Rows: ' + result[0].data);
-			}, 'json');*/
+			// Add the dimensions of the map to the widget filter
+			/*query.metadata.push({
+				"disabled": false,
+				"jaql": {
+					"collapsed": false,
+					"column": "Latitude",
+					"datatype": "numeric",
+					"dim": "[Well.Latitude]",
+					"filter": {
+						"from": (widget.mapSettings === undefined) ? "16.172473045501924" : widget.mapSettings.swLat.toString(),
+						"to": (widget.mapSettings === undefined) ? "53.51418466756816" : widget.mapSettings.neLat.toString()
+					},
+					"table": "Well",
+					"title": "Latitude"
+				},
+				"panel": "scope"
+ 			});
+			query.metadata.push({
+				"disabled": false,
+				"jaql": {
+					"collapsed": false,
+					"column": "Longitude",
+					"datatype": "numeric",
+					"dim": "[Well.Longitude]",
+					"filter": {
+						"from": (widget.mapSettings === undefined) ? "-125.94726600000001" : widget.mapSettings.swLong.toString(),
+						"to": (widget.mapSettings === undefined) ? "-65.47851600000001" : widget.mapSettings.neLong.toString()
+					},
+					"table": "Well",
+					"title": "Longitude"
+				},
+				"panel": "scope"
+ 			});
+			testQuery.metadata.push({
+				"disabled": false,
+				"jaql": {
+					"collapsed": false,
+					"column": "Latitude",
+					"datatype": "numeric",
+					"dim": "[Well.Latitude]",
+					"filter": {
+						"from": (widget.mapSettings === undefined) ? "16.172473045501924" : widget.mapSettings.swLat.toString(),
+						"to": (widget.mapSettings === undefined) ? "53.51418466756816" : widget.mapSettings.neLat.toString()
+					},
+					"table": "Well",
+					"title": "Latitude"
+				},
+				"panel": "scope"
+ 			});
+			testQuery.metadata.push({
+				"disabled": false,
+				"jaql": {
+					"collapsed": false,
+					"column": "Longitude",
+					"datatype": "numeric",
+					"dim": "[Well.Longitude]",
+					"filter": {
+						"from": (widget.mapSettings === undefined) ? "-125.94726600000001" : widget.mapSettings.swLong.toString(),
+						"to": (widget.mapSettings === undefined) ? "-65.47851600000001" : widget.mapSettings.neLong.toString()
+					},
+					"table": "Well",
+					"title": "Longitude"
+				},
+				"panel": "scope"
+ 			});*/
 
 			$.ajax({
 				type: 'POST',
 				url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
 				data: JSON.stringify(testQuery),
 				success: function(data) {
-					if(data && data.values) { 
-						var result = data.values[0];
-						var count = (result.length === undefined) ? result.data : result[0].data;
-
-						if (count > query.count) {
-							//console.log(count);
-							var column = 0;
-							try {
-								switch(widget.mapSettings.zoomLevel)
-								{
-									case 6:
-									case 7:
-									case 8:
-									case 9:
-									case 10: 
-									case 11:
-									case 12: column = "1";
-										break;
-									case 13:
-									case 14:
-									case 15: 
-									case 16: column = "2";
-										break;
-									case 17:
-									case 18:
-									case 19:
-									case 20: column = "3";
-										break;
-									default: // Map's first load
-											column = "-1";
-										break;
-								}
+					var result = data.values[0];
+					var count = (result.length === undefined) ? result.data : result[0].data;
+					var column;
+					if (count > query.count) {
+						//console.log(count);
+						
+						try {
+							if (colorPanel && colorPanel.items.length > 0) query.metadata.splice(3,1);
+							if(detailsPanel){
+								query.metadata.splice(3, detailsPanel.items.length);
 							}
-							catch(err) {};
-							query.metadata[0].jaql.column = "Latitude" + column;
-							query.metadata[0].jaql.title = "Latitude" + column;
-							query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
-							query.metadata[1].jaql.column = "Longitude" + column;
-							query.metadata[1].jaql.title = "Longitude" + column;
-							query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
+							
+							switch(widget.mapSettings.zoomLevel)
+							{
+								case 6:
+								case 7:
+								case 8:
+								case 9:
+								case 10: 
+								case 11:
+								case 12: column = "1";
+									break;
+								case 13:
+								case 14:
+								case 15: 
+								case 16: column = "2";
+									break;
+								case 17:
+								case 18:
+								case 19:
+								case 20: column = "3";
+									break;
+								default: // Map's first load
+										column = "0";
+									break;
+							}
 						}
+						catch(err) { column = "0";};
+						
 					}
+					else column = "";
+
+					query.metadata[0].jaql.column = "Latitude" + column;
+					query.metadata[0].jaql.title = "Latitude" + column;
+					query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
+					query.metadata[1].jaql.column = "Longitude" + column;
+					query.metadata[1].jaql.title = "Longitude" + column;
+					query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
+
 				},
 				dataType: 'json',
 				async: false
@@ -626,10 +690,10 @@ prism.registerWidget("googleMaps", {
 							// initialize map & map options
 							var myOptions = {
 								mapTypeId : google.maps.MapTypeId.ROADMAP,
-								zoom: 4,
-								center: {
+								zoom: (e.widget.mapSettings.zoomLevel === undefined) ? 4 : e.widget.mapSettings.zoomLevel,
+								center: (e.widget.mapSettings.center === undefined) ? {
 											lat: 37.09024, lng: -95.712891
-										},
+										} : { lat: e.widget.mapSettings.center.lat, lng: e.widget.mapSettings.center.lng },
 								styles: [
 											{
 												"featureType": "landscape",
@@ -710,6 +774,82 @@ prism.registerWidget("googleMaps", {
 							};
 							var map = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
 							
+							//Add refresh button
+							google.maps.event.addListenerOnce(map, 'idle', function () {
+
+								if ($('#mapRefresh').length < 1) {
+									var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results">' +
+										'<div class="update-icon"></div>' +
+										'</div>');
+
+									map.controls[google.maps.ControlPosition.RIGHT].push(mapRefreshButton[0]);
+
+									$('#mapRefresh').on('mouseover', function () {
+										$('#mapRefresh a i').addClass('fa-spin').addClass('fa-fw');
+									});
+									$('#mapRefresh').on('mouseout', function () {
+										$('#mapRefresh a i').removeClass('fa-spin').removeClass('fa-fw');
+									});
+
+									$('#mapRefresh').on('click', function () {
+										$('#mapRefresh').hide();
+
+										var mapBounds = map.getBounds();
+										var NE = mapBounds.getNorthEast();
+										var SW = mapBounds.getSouthWest();
+										
+										var lat = {
+											"jaql": {
+												"table": "Well",
+												"column": "Latitude",
+												"dim": "[Well.Latitude]",
+												"datatype": "numeric",
+												"title": "Latitude",
+												"filter": {
+													"from": SW.lat(),
+													"to": NE.lat()
+												}
+											}
+										};
+
+										var long = {
+											"jaql": {
+												"table": "Well",
+												"column": "Longitude",
+												"dim": "[Well.Longitude]",
+												"datatype": "numeric",
+												"title": "Longitude",
+												"filter": {
+													"from": SW.lng(),
+													"to": NE.lng()
+												}
+											}
+										};
+										var options = {
+											save: false,
+											refresh: false
+										};
+
+										//  Set via JavaScript API
+										prism.activeDashboard.filters.update(lat,options);
+										prism.activeDashboard.filters.update(long,options);
+										
+										//  Make sure the widgets get refreshed
+										var refreshDashboard = function(){
+											$.each(prism.activeDashboard.widgets.$$widgets,function(){
+												this.refresh();
+											})
+										};
+
+										setTimeout(refreshDashboard,500);
+									});
+
+									$('#mapRefresh').hide();
+								}
+
+								//Activate the bounds changed function only after the map has been idle for a second
+							});
+
 							// County lines
 							var _countyLabels = [];
 							var _countyListener = null;
@@ -953,7 +1093,6 @@ prism.registerWidget("googleMaps", {
 												type: google.maps.drawing.OverlayType.POLYGON,
 												dontAdd: true
                    							 };
-
 											google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
 											break;
 										// case google.maps.drawing.OverlayType.POLYLINE:
@@ -1041,7 +1180,7 @@ prism.registerWidget("googleMaps", {
 							}
 
 
-							function updateWellIDFilter(event){
+							function updateWellIDFilter(event) {
 									if (event.type == google.maps.drawing.OverlayType.RECTANGLE ||
 										event.type == google.maps.drawing.OverlayType.CIRCLE){
 										var wellFieldName = "Well Unique Id",
@@ -1059,7 +1198,6 @@ prism.registerWidget("googleMaps", {
 											addCircleFilter(wellField,event);
 										}
 
-
 									var options = {
 										save: false,
 										refresh: false
@@ -1076,6 +1214,9 @@ prism.registerWidget("googleMaps", {
 									// };
 
 									// setTimeout(refreshDashboard,500);
+									//  Set via JavaScript API
+									prism.activeDashboard.filters.update(wellField,options);
+									$('#mapRefresh').show();
 								}
 							}
 
@@ -1673,13 +1814,16 @@ prism.registerWidget("googleMaps", {
 								var NE = bounds.getNorthEast();
 								var SW = bounds.getSouthWest();
 								var zoom = map.getZoom();
+								var center = map.getCenter();
 								e.widget.mapSettings = {
 									"zoomLevel": zoom,
 									"neLat": NE.lat(),
 									"neLong": NE.lng(),
 									"swLat": SW.lat(),
-									"swLong": SW.lng()
+									"swLong": SW.lng(),
+									"center": { lat: center.lat(), lng: center.lng() }
 								};
+								$('#mapRefresh').show();
 							});
 
 							
@@ -2060,7 +2204,6 @@ prism.registerWidget("googleMaps", {
 							map.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
 							});
 						});
-						console.log("Complete map 1");
 
 					});
 				});
@@ -2069,7 +2212,6 @@ prism.registerWidget("googleMaps", {
 		if(typeof google != "undefined"){
 			// first call to onGoogleMapLoaded is done when google maps loaded once loaded, render will call onGoogleMapLoaded - its done to avoid multiple invocation of onGoogleMapLoaded
 			window.onGoogleMapLoaded();
-			console.log("Complete map 2");
 		}
 	},
 
