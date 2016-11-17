@@ -631,12 +631,12 @@ prism.registerWidget("googleMaps", {
 							var headers = s.rawQueryResult.headers; // headers
 
 							var colorCategory;
-							if(e.widget.metadata.panel('color').items[0] && e.widget.metadata.panel('color').items[0].jaql && e.widget.metadata.panel('color').items[0].jaql.column) { 
+							if(e.widget.metadata.panel('color') && e.widget.metadata.panel('color').items[0] && e.widget.metadata.panel('color').items[0].jaql && e.widget.metadata.panel('color').items[0].jaql.column) { 
 								colorCategory = e.widget.metadata.panel('color').items[0].jaql.column;
 							}
 
 							var shapeCategory;
-							if(e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) { 
+							if(e.widget.metadata.panel('shape') && e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) { 
 								shapeCategory = e.widget.metadata.panel('shape').items[0].jaql.column;
 							}
 							//	Define function to format numbers w/ commas
@@ -688,6 +688,15 @@ prism.registerWidget("googleMaps", {
 							var testMarker = createMarker(10, "#00A0DC");
 							
 							// initialize map & map options
+							if(e.widget.mapSettings) { 
+								//do nothing
+							} else { 
+								e.widget.mapSettings = {
+									"zoomLevel": 4,
+									"center": { lat: 37.09024, lng: -95.712891 }
+								};
+							}
+
 							var myOptions = {
 								mapTypeId : google.maps.MapTypeId.ROADMAP,
 								zoom: (e.widget.mapSettings.zoomLevel === undefined) ? 4 : e.widget.mapSettings.zoomLevel,
