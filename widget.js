@@ -837,12 +837,12 @@ prism.registerWidget("googleMaps", {
 								overlays = e.widget.queryMetadata.overlays;
 							};
 
-							//For testing purposes
-							// e.widget.queryMetadata.overlays = [];
-							// e.widget.changesMade();
-							// overlays = [];
+						//For testing purposes
+						// e.widget.queryMetadata.overlays = [];
+						// e.widget.changesMade();
+						// overlays = [];
 
-							google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
+						google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
 								updateWellIDFilter(event);
 								var overlay;
 								if(event.dontAdd) { 
@@ -908,7 +908,6 @@ prism.registerWidget("googleMaps", {
 												type: google.maps.drawing.OverlayType.CIRCLE,
 												dontAdd: true
                    							 };
-
 											google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
 											break;
 										case google.maps.drawing.OverlayType.RECTANGLE:
@@ -933,7 +932,6 @@ prism.registerWidget("googleMaps", {
 												type: google.maps.drawing.OverlayType.RECTANGLE,
 												dontAdd: true
                    							 };
-
 											google.maps.event.trigger(_drawManager, 'overlaycomplete', o);
 											break;
 										case google.maps.drawing.OverlayType.POLYGON:
@@ -950,7 +948,6 @@ prism.registerWidget("googleMaps", {
 												suppressUndo: true,
 												map: map
 											});
-
 											var o = {
 												overlay: testPolygon,
 												type: google.maps.drawing.OverlayType.POLYGON,
@@ -1045,15 +1042,23 @@ prism.registerWidget("googleMaps", {
 
 
 							function updateWellIDFilter(event){
-								if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
-									var wellFieldName = "Well Unique Id",
-										filterFields = prism.activeDashboard.filters.$$items,
-										bounds = event.overlay.bounds;
+									if (event.type == google.maps.drawing.OverlayType.RECTANGLE ||
+										event.type == google.maps.drawing.OverlayType.CIRCLE){
+										var wellFieldName = "Well Unique Id",
+											filterFields = prism.activeDashboard.filters.$$items,
+											bounds = event.overlay.bounds;
+
+										
 
 									var wellField = createDashFilter(wellFieldName,filterFields);
 
-									// Add the lat and long as attributes
-									addLatLngOrAttribute(wellField,bounds);
+									if (event.type == google.maps.drawing.OverlayType.RECTANGLE ){
+											// Add the lat and long as attributes
+											addLatLngOrAttribute(wellField,bounds);
+										} else {
+											addCircleFilter(wellField,event);
+										}
+
 
 									var options = {
 										save: false,
@@ -1083,14 +1088,14 @@ prism.registerWidget("googleMaps", {
 									"title": "Latitude",
 									"collapsed": true,
 									"filter": {
-										"and":[{
-											"fromNotEqual": bounds.f.f
-										}, {
-											"toNotEqual": bounds.f.b
-										}
-										]
-									}
-								}]};
+											"and":[{
+												"fromNotEqual": bounds.f.f
+											}, {
+												"toNotEqual": bounds.f.b
+											}
+										]}
+									}]};
+
 								var lngItem = {"attributes":[{
 									"table": "Well",
 									"column": "Longitude",
@@ -1104,9 +1109,9 @@ prism.registerWidget("googleMaps", {
 										}, {
 											"toNotEqual": bounds.b.f
 										}
-										]
-									}
+									]}
 								}]};
+
 
 								wellField.jaql.filter.or.push({
 									"and":[latItem,lngItem]
@@ -1122,6 +1127,11 @@ prism.registerWidget("googleMaps", {
 
 								return field;
 							}
+								function addCircleFilter(wellField,event){
+									wellField.jaql.filter.or.push(createCircleFilter(event.overlay.center.lat(),
+										event.overlay.center.lng(),
+										event.overlay.radius));
+								}
 
 							function getFieldFromItems(field,items) {
 								return _.find(items,function(item){
@@ -1130,6 +1140,51 @@ prism.registerWidget("googleMaps", {
 										return item;
 									}
 								});
+							}
+
+							
+							function createCircleFilter(centerLat,centerLng,redius){
+								return {
+									"measure": {
+
+										"formula": "12742*asin(SQRT(0.5-cos((([lat]-" + centerLat + ")*0.017453292519943295))/2+cos(" + centerLat + "*0.017453292519943295)*cos([lat]*0.017453292519943295)*(1-cos((([lng]-" + centerLng + ")*0.017453292519943295)))/2))",
+										"context": {
+											"[lng]": {
+												"table": "Well",
+												"column": "Longitude",
+												"dim": "[Well.Longitude]",
+												"datatype": "numeric",
+												"agg": "sum",
+												"title": "Total Longitude"
+											},
+											"[lat]": {
+												"table": "Well",
+												"column": "Latitude",
+												"dim": "[Well.Latitude]",
+												"datatype": "numeric",
+												"agg": "sum",
+												"title": "Total Latitude"
+											}
+										}
+									},
+									"toNotEqual" : (redius/1000).toString()
+								};
+							}
+
+							function createFieldToFilterPanel(fieldName) {
+								return {
+									"jaql": {
+										"table": "Well",
+										"column": fieldName,
+										"dim": "[Well." + fieldName + "]",
+										"datatype": "numeric",
+										"title": fieldName,
+										"filter": {
+											"or": [],
+											"custom": true
+										}
+									}
+								};
 							}
 
 							function removeWellIDFilter(event){
@@ -1345,6 +1400,7 @@ prism.registerWidget("googleMaps", {
 								e.widget.queryMetadata.savedShapes = shapesMetadata;
 								e.widget.changesMade();
 							}
+								
 							
 							//Map Side Bar Begin
 
