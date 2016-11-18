@@ -1,4 +1,3 @@
-
 prism.registerWidget("googleMaps", {
 
 	name : "googleMaps",
@@ -1257,8 +1256,6 @@ prism.registerWidget("googleMaps", {
 										// 	save: false,
 										// 	refresh: false
 										// };
-
-
 										// prism.activeDashboard.filters.update(wellField,options);
 										$('#mapRefresh').show();
 									}
@@ -1427,7 +1424,7 @@ prism.registerWidget("googleMaps", {
 
 								function addRowsToColorLegend(arr) {
 									_.each(arr, function(row){
-										$('#mapSidebarColorTable tbody').append($("<tr id='colorRow"+row.value+"' class='colorLegendRow'>"
+										$('#mapSidebarColorTable tbody').append($("<tr id='colorRow"+row.selector+"' class='colorLegendRow'>"
 											+"<td class='colorLegendDescription'><span>"+row.value+"</span></td>"
 											+"<td class='colorLegendImg'><i class='fa fa-square' style='color:" + row.color + "; font-size: 20px;'></i></td>"
 											+"</tr>"));
@@ -1449,25 +1446,25 @@ prism.registerWidget("googleMaps", {
 												shape = item.shape;
 											}
 										}
-										$('#mapSidebarShapeTable tbody').append($("<tr id='shapeRow"+row+"' class='shapeLegendRow'>"
+										var rowId;
+										if (typeof row === 'string' || row instanceof String) {
+											rowId = row.replace(/\W/g, '');
+										}
+										else { 
+											 rowId = row;
+										}
+										$('#mapSidebarShapeTable tbody').append($("<tr id='shapeRow"+rowId+"' class='shapeLegendRow'>"
 											+"<td class='shapeLegendDescription'><span>"+row+"</span></td>"
 											+"<td class='shapeLegendImg'><img src='../Resources/shapes/"+shape+".png'/></td>"
 											+"</tr>"));
-										var selector;
-										if (typeof row === 'string' || row instanceof String) {
-											selector = row.replace("\\", "\\\\")
-										}
-										else {
-											selector = row;
-										}
-										$('#shapeRow'+selector+' td.shapeLegendImg img').click(function() {
-											openShapeSelection(row);
+										$('#shapeRow'+rowId+' td.shapeLegendImg img').click(function() {
+											openShapeSelection(row, rowId);
 										});
 									});
 								}
 
 								var open;
-								function openShapeSelection(row) {
+								function openShapeSelection(row, selector) {
 									$('#shapeSelectionWindow').remove();
 									if(open != row) {
 										var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
@@ -1483,7 +1480,7 @@ prism.registerWidget("googleMaps", {
 											$('#shapeSelectionWindow #shapeSelectionContent').append(shapeString);
 
 											$('#shapeSelectionWindow div #'+shape).click(function(){
-												changeShapeOfCategory(row, shape);
+												changeShapeOfCategory(row, shape, selector);
 												$('#shapeSelectionWindow').remove();
 											});
 										});
@@ -1493,7 +1490,7 @@ prism.registerWidget("googleMaps", {
 									}
 								}
 
-								function changeShapeOfCategory(data, shape) {
+								function changeShapeOfCategory(data, shape, selector) {
 									_.each(markers, function(marker){
 										if(marker.shape === data) {
 											marker.marker.icon =
@@ -1505,13 +1502,6 @@ prism.registerWidget("googleMaps", {
 											marker.marker.setMap(map);
 										}
 									});
-									var selector;
-									if (typeof data === 'string' || data instanceof String) {
-										selector = data.replace("\\", "\\\\")
-									}
-									else {
-										selector = data;
-									}
 									$('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '../Resources/shapes/'+shape+'.png');
 									var shapeMetadataColumn = _.find(shapesMetadata, function(category){
 										return category.column == shapeCategory;
@@ -1620,7 +1610,7 @@ prism.registerWidget("googleMaps", {
 								var savedShapesCategory;
 
 								var colorArray = _.map(qresult, function(item){
-									return item[3] && item[3].data && item[3].color? { value: item[3].text, color: item[3].color } : null;
+									return item[3] && item[3].data && item[3].color? { value: item[3].text, color: item[3].color , selector: item[3].text.replace(/\W/g, '')} : null;
 								});
 								colorArray = _.uniq(colorArray, function(item) {
 									return JSON.stringify(item);
@@ -1818,7 +1808,6 @@ prism.registerWidget("googleMaps", {
 
 								//Add event listeners to each marker, to popup the info window
 								/*oms.addListener('click', function(marker, event) {
-
 								 infowindow.setContent(marker.sisenseTooltip);
 								 infowindow.open(map, marker);
 								 });*/
@@ -1855,12 +1844,10 @@ prism.registerWidget("googleMaps", {
 								 google.maps.event.addListener(markerCluster, 'mouseout', function (cluster) {
 								 infowindow.close();
 								 });
-
 								 //	Close any open info windows when clicking on a cluster
 								 google.maps.event.addListener(markerCluster, 'click', function (cluster) {
 								 infowindow.close();
 								 });
-
 								 //	Define function for closing info windows on click
 								 google.maps.closeInfoWindow = function() {
 								 infowindow.close();
