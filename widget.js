@@ -840,7 +840,7 @@ prism.registerWidget("googleMaps", {
 											};
 
 											var options = {
-												save: false,
+												save: true,
 												refresh: false
 											};
 
@@ -848,18 +848,25 @@ prism.registerWidget("googleMaps", {
 												var wellField = $$get(e.widget,'googleMapFilters.shapes');
 
 												if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
-													prism.activeDashboard.filters.remove(wellField);
+
+													delete wellField.jaql.filter.filter;
+													try{
+														prism.activeDashboard.filters.remove(wellField,options);
+													} catch (Error) {
+														console.log("filter 'well unique id' does not exist on the dashboard");
+													}
 												} else {
 													prism.activeDashboard.filters.update(e.widget.googleMapFilters.shapes,options);
 												}
 
 												delete e.widget.googleMapFilters.shapes;
-												e.widget.changesMade();
 											}
 
 											//  Set via JavaScript API
 											prism.activeDashboard.filters.update(lat,options);
 											prism.activeDashboard.filters.update(long,options);
+
+											prism.activeDashboard.$dashboard.updateDashboard(prism.activeDashboard,"filters");
 
 											//  Make sure the widgets get refreshed
 											var refreshDashboard = function(){
@@ -868,7 +875,9 @@ prism.registerWidget("googleMaps", {
 												})
 											};
 
-											setTimeout(refreshDashboard,500);
+											e.widget.changesMade();
+
+											setTimeout(refreshDashboard,100);
 										});
 
 										$('#mapRefresh').hide();
@@ -1070,7 +1079,7 @@ prism.registerWidget("googleMaps", {
 
 										overlays.push(overlay);
 										e.widget.queryMetadata.overlays = overlays;
-										e.widget.changesMade();
+										//e.widget.changesMade();
 									}
 
 									if (shoulsUpdatefilters){
@@ -1202,7 +1211,7 @@ prism.registerWidget("googleMaps", {
 													&& overlay.radius == radius;
 											});
 
-											removeWellIDFilter(event)
+											removeWellIDFilter(e.widget,event)
 											break;
 										case 'rectangle':
 											overlays = _.reject(overlays, function(overlay) {
@@ -1213,7 +1222,7 @@ prism.registerWidget("googleMaps", {
 													&& overlay.bounds.f.f == event.overlay.bounds.f.f
 											});
 
-											removeWellIDFilter(event);
+											removeWellIDFilter(e.widget,event);
 											break;
 										case 'polygon':
 											var path = google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray());
@@ -1224,14 +1233,17 @@ prism.registerWidget("googleMaps", {
 											break;
 										// case 'polyline':
 										// 	var path = google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray());
-										// 	overlays = _.reject(overlays, function(overlay) { 
-										// 		return overlay.type == 'polyline' 
+										// 	overlays = _.reject(overlays, function(overlay) {
+										// 		return overlay.type == 'polyline'
 										// 		&& overlay.latLngs == path;
 										// 	});
 										// 	break;
 									}
+
 									e.widget.queryMetadata.overlays = overlays;
-									e.widget.changesMade();
+									// e.widget.changesMade();
+
+									$('#mapRefresh').show();
 								}
 
 
@@ -1256,6 +1268,8 @@ prism.registerWidget("googleMaps", {
 										// 	save: false,
 										// 	refresh: false
 										// };
+
+
 										// prism.activeDashboard.filters.update(wellField,options);
 										$('#mapRefresh').show();
 									}
@@ -1340,7 +1354,7 @@ prism.registerWidget("googleMaps", {
 									};
 								}
 
-								function removeWellIDFilter(event,widget){
+								function removeWellIDFilter(widget,event){
 									var wellFieldName = "Well Unique Id",
 										filterFields = prism.activeDashboard.filters.$$items;
 
