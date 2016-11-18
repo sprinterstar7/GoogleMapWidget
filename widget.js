@@ -159,11 +159,9 @@ prism.registerWidget("googleMaps", {
 			var elasticubeParam = "elasticube="+elasticube;
 			var zoomLevel = -1;
 			var zoomLevelParam = "&zoomLevel="+zoomLevel;
-			//var endpoint =  encodeURI((baseUrl + elasticubeParam + zoomLevelParam));
 
 			var query = {
 				datasource : widget.datasource,
-				//endpoint: endpoint,
 				metadata : []
 			};
 
@@ -631,14 +629,17 @@ prism.registerWidget("googleMaps", {
 								var headers = s.rawQueryResult.headers; // headers
 
 								var colorCategory;
+
 								if(e.widget.metadata.panel('color') && e.widget.metadata.panel('color').items[0] && e.widget.metadata.panel('color').items[0].jaql && e.widget.metadata.panel('color').items[0].jaql.column) {
 									colorCategory = e.widget.metadata.panel('color').items[0].jaql.column;
 								}
 
 								var shapeCategory;
+
 								if(e.widget.metadata.panel('shappe') && e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) {
 									shapeCategory = e.widget.metadata.panel('shape').items[0].jaql.column;
 								}
+
 								//	Define function to format numbers w/ commas
 								function formatWithCommas(x) {
 									var parts = x.toString().split(".");
@@ -654,7 +655,6 @@ prism.registerWidget("googleMaps", {
 
 
 								function createMarker(radius, color) {
-
 									var canvas, context;
 									var square = 2*radius;
 
@@ -682,7 +682,6 @@ prism.registerWidget("googleMaps", {
 									context.stroke();
 
 									return canvas.toDataURL();
-
 								}
 
 								var testMarker = createMarker(10, "#00A0DC");
@@ -780,12 +779,14 @@ prism.registerWidget("googleMaps", {
 										}
 									]
 								};
+
 								var map = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
 
 								//Add refresh button
 								google.maps.event.addListenerOnce(map, 'idle', function () {
 
 									if ($('#mapRefresh').length < 1) {
+
 										var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results">' +
 											'<div class="update-icon"></div>' +
 											'</div>');
@@ -833,6 +834,7 @@ prism.registerWidget("googleMaps", {
 													}
 												}
 											};
+
 											var options = {
 												save: false,
 												refresh: false
@@ -906,14 +908,17 @@ prism.registerWidget("googleMaps", {
 										var lat = 0;
 										var lng = 0;
 										var total = 0;
+
 										_.each(polygonArray, function (arr) {
 											var coord = arr.split(",")
 											lat += Number(coord[0]);
 											lng += Number(coord[1]);
 											total += 1;
 										});
+
 										lat = lat / total;
 										lng = lng / total;
+
 										var mapLabel = new MapLabel({
 											text: nameStr,
 											position: new google.maps.LatLng(lng, lat),
@@ -981,6 +986,7 @@ prism.registerWidget("googleMaps", {
 								_drawManager.setMap(map);
 
 								var overlays = [];
+
 								if(e.widget.queryMetadata) {
 									//Do nothing
 								} else {
@@ -988,23 +994,16 @@ prism.registerWidget("googleMaps", {
 									e.widget.changesMade();
 								}
 
-
-
 								if(e.widget.queryMetadata.overlays) {
 									overlays = e.widget.queryMetadata.overlays;
 								};
 
-								//For testing purposes
-								// e.widget.queryMetadata.overlays = [];
-								// e.widget.changesMade();
-								// overlays = [];
-
 								google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
-									debugger;
 									var shoulsUpdatefilters = false,
 										dashfilters = prism.activeDashboard.filters.$$items;
 
 									var overlay;
+
 									if(event.dontAdd) {
 
 									}
@@ -1150,39 +1149,8 @@ prism.registerWidget("googleMaps", {
 								}
 
 								function compareRecFilter(wellIdFilterOrStatment,recBounds){
-
-									var latItem = {"attributes":[{
-										"table": "Well",
-										"column": "Latitude",
-										"dim": "[Well.Latitude]",
-										"datatype": "numeric",
-										"title": "Latitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": recBounds.f.f
-											}, {
-												"toNotEqual": recBounds.f.b
-											}
-											]
-										}
-									}]};
-									var lngItem = {"attributes":[{
-										"table": "Well",
-										"column": "Longitude",
-										"dim": "[Well.Longitude]",
-										"datatype": "numeric",
-										"title": "Longitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": recBounds.b.b
-											}, {
-												"toNotEqual": recBounds.b.f
-											}
-											]
-										}
-									}]};
+									var latItem = getLatLngFieldFilter(recBounds.f.f,recBounds.f.b,"Latitude"),
+										lngItem = getLatLngFieldFilter(recBounds.b.b,recBounds.b.f,"Longitude");
 
 									return _.find($$get(wellIdFilterOrStatment,"jaql.filter.or"), function(filter){
 										return $$get(filter,"and") && filter.and[0] && filter.and[1]
@@ -1194,7 +1162,6 @@ prism.registerWidget("googleMaps", {
 								function getCircleCenterLatLng(center) {
 									return new google.maps.LatLng(center.lat, center.lng);
 								}
-
 
 								function getCoordinateLatLng(bounds) {
 									var toReturn = [];
@@ -1217,6 +1184,8 @@ prism.registerWidget("googleMaps", {
 													&& overlay.center.lng == center.lng
 													&& overlay.radius == radius;
 											});
+
+											removeWellIDFilter(event)
 											break;
 										case 'rectangle':
 											overlays = _.reject(overlays, function(overlay) {
@@ -1261,7 +1230,6 @@ prism.registerWidget("googleMaps", {
 										var wellField = createDashFilter(wellFieldName,filterFields);
 
 										if (event.type == google.maps.drawing.OverlayType.RECTANGLE ){
-											// Add the lat and long as attributes
 											addLatLngOrAttribute(wellField,bounds);
 										} else {
 											addCircleFilter(wellField,event);
@@ -1272,56 +1240,14 @@ prism.registerWidget("googleMaps", {
 											refresh: false
 										};
 
-										// //Set via JavaScript API
-										// prism.activeDashboard.filters.update(wellField,options);
-
-										// //  Make sure the widgets get refreshed
-										// var refreshDashboard = function(){
-										// 	$.each(prism.activeDashboard.widgets.$$widgets,function(){
-										// 		this.refresh();
-										// 	})
-										// };
-
-										// setTimeout(refreshDashboard,500);
-										//  Set via JavaScript API
 										prism.activeDashboard.filters.update(wellField,options);
 										$('#mapRefresh').show();
 									}
 								}
 
 								function addLatLngOrAttribute(wellField,bounds){
-									var latItem = {"attributes":[{
-										"table": "Well",
-										"column": "Latitude",
-										"dim": "[Well.Latitude]",
-										"datatype": "numeric",
-										"title": "Latitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": bounds.f.f
-											}, {
-												"toNotEqual": bounds.f.b
-											}
-											]}
-									}]};
-
-									var lngItem = {"attributes":[{
-										"table": "Well",
-										"column": "Longitude",
-										"dim": "[Well.Longitude]",
-										"datatype": "numeric",
-										"title": "Longitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": bounds.b.b
-											}, {
-												"toNotEqual": bounds.b.f
-											}
-											]}
-									}]};
-
+									var latItem = getLatLngFieldFilter(bounds.f.f,bounds.f.b,"Latitude"),
+										lngItem =getLatLngFieldFilter( bounds.b.b,bounds.b.f,"Longitude");
 
 									wellField.jaql.filter.or.push({
 										"and":[latItem,lngItem]
@@ -1398,15 +1324,21 @@ prism.registerWidget("googleMaps", {
 								}
 
 								function removeWellIDFilter(event){
+									var wellFieldName = "Well Unique Id",
+										filterFields = prism.activeDashboard.filters.$$items;
+
+									var wellField = createDashFilter(wellFieldName,filterFields);
+
 									if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
-										var wellFieldName = "Well Unique Id",
-											filterFields = prism.activeDashboard.filters.$$items,
-											bounds = event.overlay.bounds;
+										removeLatLngOrAttribute(wellField,event.overlay.bounds);
+									}else {
+										removeCircleOrAttribute(wellField,event.overlay);
+									}
 
-										var wellField = createDashFilter(wellFieldName,filterFields);
-
-										// Add the lat and long as attributes
-										removeLatLngOrAttribute(wellField,bounds);
+									if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
+										//remove filter
+										prism.activeDashboard.filters.remove(wellField);
+									} else {
 
 										var options = {
 											save: false,
@@ -1414,59 +1346,46 @@ prism.registerWidget("googleMaps", {
 										};
 
 										//  Set via JavaScript API
-										// prism.activeDashboard.filters.update(wellField,options);
-
-										// //  Make sure the widgets get refreshed
-										// var refreshDashboard = function(){
-										// 	$.each(prism.activeDashboard.widgets.$$widgets,function(){
-										// 		this.refresh();
-										// 	})
-										// };
-
-										//setTimeout(refreshDashboard,500);
+										prism.activeDashboard.filters.update(wellField,options);
 									}
 								}
 
-								function removeLatLngOrAttribute(wellField,bounds){
-									var latItem = {"attributes":[{
-										"table": "Well",
-										"column": "Latitude",
-										"dim": "[Well.Latitude]",
-										"datatype": "numeric",
-										"title": "Latitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": bounds.f.f
-											}, {
-												"toNotEqual": bounds.f.b
-											}
-											]
-										}
-									}]};
-									var lngItem = {"attributes":[{
-										"table": "Well",
-										"column": "Longitude",
-										"dim": "[Well.Longitude]",
-										"datatype": "numeric",
-										"title": "Longitude",
-										"collapsed": true,
-										"filter": {
-											"and":[{
-												"fromNotEqual": bounds.b.b
-											}, {
-												"toNotEqual": bounds.b.f
-											}
-											]
-										}
-									}]};
+								function removeCircleOrAttribute(wellField,overlay){
+									var circleItem = createCircleFilter(overlay.center.lat(), overlay.center.lng(), overlay.radius);
 
 									wellField.jaql.filter.or = _.reject(wellField.jaql.filter.or, function(filter){
-										return filter.and[0] && filter.and[1]
+										return  $$get(filter,"measure.formula") == circleItem.measure.formula;
+									});
+								}
+
+								function getLatLngFieldFilter(from,to,fieldName){
+									return  {"attributes":[{
+										"table": "Well",
+										"column": fieldName,
+										"dim": "[Well." + fieldName + "]",
+										"datatype": "numeric",
+										"title": fieldName,
+										"collapsed": true,
+										"filter": {
+											"and":[{
+												"fromNotEqual": from
+											}, {
+												"toNotEqual": to
+											}
+											]
+										}
+									}]}
+								}
+
+								function removeLatLngOrAttribute(wellField,bounds){
+									var latItem = getLatLngFieldFilter(bounds.f.f,bounds.f.b,"Latitude"),
+										lngItem = getLatLngFieldFilter( bounds.b.b,bounds.b.f,"Longitude");
+
+									wellField.jaql.filter.or = _.reject(wellField.jaql.filter.or, function(filter){
+										return filter.and && filter.and[0] && filter.and[1]
 											&& JSON.stringify(filter.and[0]) ==  JSON.stringify(latItem)
 											&& JSON.stringify(filter.and[1]) ==  JSON.stringify(lngItem);
 									});
-
 								}
 
 								var availableShapes = [
