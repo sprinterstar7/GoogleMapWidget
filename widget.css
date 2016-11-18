@@ -275,3 +275,46 @@
     height: 25px;
     width: 25px;
 }
+
+#mapRefresh {
+   z-index: 1002;
+   height: 58px;
+   width: 58px;
+   background-color: #24d8e5 ;
+   position: absolute;
+   border-radius: 100%;
+   box-shadow: 0 0 5px 1px rgba(0,0,0,.15);
+   cursor: pointer;
+   display: none;
+   margin-right: 10px;
+   margin-top: 10px;
+   -webkit-transition: all 150ms ease;
+   -moz-transition: all 150ms ease;
+   -o-transition: all 150ms ease;
+   transition: all 150ms ease;
+                     transition-property: all;
+                     transition-duration: 150ms;
+                     transition-timing-function: ease;
+                     transition-delay: initial;
+}
+
+#mapRefresh:hover { 
+   -webkit-transition: all 150ms ease;
+   -moz-transition: all 150ms ease;
+   -o-transition: all 150ms ease;
+   transition: all 150ms ease;
+                     transition-property: all;
+                     transition-duration: 150ms;
+                     transition-timing-function: ease;
+                     transition-delay: initial;
+   height: 76px;
+   width: 76px;
+   padding-top:8px;
+}
+
+.update-icon {
+   width: 24px;
+   height: 31px;
+   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAfCAYAAAD9cg1AAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAATZJREFUeNq0VQsNgzAQhQUBSMDBkFAHQwISmILhoBKYA+YACWwKmAPm4HZk1+TStNAuvZe8lAB992n7mmWRAIAG2SHLTAIovMIPC1JJBLChk1YDbvxfDU6skT1yRE6wjz5GWCFniMMUIlwiB2viTFU0e+LIKkScZz3akxzC267qQtsysoltwCIfZ80mtkfi9N8UlTVrjTlAWuLwtKyfSS3gROOFxnue5x9Jf2mkDMygTKRnTn9V8A8J27N14rY9mADXxE05Z5JgbtBKiFdsTSuJANoYpIR4HWI3vrLNZVMHOPEcI96xgwiuq5ESmJnd1LFZgy+AlcAa5AaOrDk64mD9s4RmriLv4ZVswWkzhePdm+jbw0/kh8YX8hFtMbQjtCdjlXJfK+qtTABPNUrKwNTeYvrwFWAAc/D9t7oIgw4AAAAASUVORK5CYII=) 0 0 no-repeat;
+   margin: 14px auto;
+}

@@ -1256,8 +1256,6 @@ prism.registerWidget("googleMaps", {
 										// 	save: false,
 										// 	refresh: false
 										// };
-
-
 										// prism.activeDashboard.filters.update(wellField,options);
 										$('#mapRefresh').show();
 									}
@@ -1789,6 +1787,31 @@ prism.registerWidget("googleMaps", {
 								if(shapeArray) {
 									addRowsToShapeBy(shapeArray);
 								}
+
+								if(colorArray) {
+									addRowsToColorLegend(colorArray);
+								}
+
+								google.maps.event.addListener(map, 'bounds_changed', function() {
+									var bounds = map.getBounds(),
+										NE = bounds.getNorthEast(),
+										SW = bounds.getSouthWest(),
+										zoom = map.getZoom(),
+										center = map.getCenter();
+
+									e.widget.mapSettings = {
+										"zoomLevel": zoom,
+										"neLat": NE.lat(),
+										"neLong": NE.lng(),
+										"swLat": SW.lat(),
+										"swLong": SW.lng(),
+										"center": { lat: center.lat(), lng: center.lng() }
+									};
+
+									$('#mapRefresh').show();
+								});
+
+
 
 								if(colorArray) {
 									addRowsToColorLegend(colorArray);
