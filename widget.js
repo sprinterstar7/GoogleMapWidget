@@ -1629,12 +1629,16 @@ prism.registerWidget("googleMaps", {
 								colorArray = _.uniq(colorArray, function(item) {
 									return JSON.stringify(item);
 								});
+								colorArray = _.sortBy(colorArray, function(item) { 
+									return item.value.toUpperCase();
+								});
 								colorArray = _.compact(colorArray);
 
 								var shapeArray = _.map(qresult, function(item){
 									return item[4] && item[4].data ? item[4].data : null;
 								});
 								shapeArray = _.uniq(shapeArray);
+								shapeArray = shapeArray.sort();
 								shapeArray = _.compact(shapeArray);
 
 								var i = 0,
