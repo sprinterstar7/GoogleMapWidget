@@ -388,6 +388,11 @@ prism.registerWidget("googleMaps", {
 		}
 	},
 	render : function (s, e) {
+		var googleMapFilters = {
+			SHAPES: 0,
+			BOUNDS: 1
+		};
+
 		var externalPaths = {
 			markerclusterer: '://rawgit.com/googlemaps/js-marker-clusterer/gh-pages/src/markerclusterer.js',
 			infobox: '://rawgit.com/googlemaps/v3-utility-library/master/infobox/src/infobox.js',
@@ -840,6 +845,19 @@ prism.registerWidget("googleMaps", {
 												refresh: false
 											};
 
+											if ($$get(e.widget,'googleMapFilters.shapes')){
+												var wellField = $$get(e.widget,'googleMapFilters.shapes');
+
+												if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
+													prism.activeDashboard.filters.remove(wellField);
+												} else {
+													prism.activeDashboard.filters.update(e.widget.googleMapFilters.shapes,options);
+												}
+
+												delete e.widget.googleMapFilters.shapes;
+												e.widget.changesMade();
+											}
+
 											//  Set via JavaScript API
 											prism.activeDashboard.filters.update(lat,options);
 											prism.activeDashboard.filters.update(long,options);
@@ -1057,7 +1075,7 @@ prism.registerWidget("googleMaps", {
 									}
 
 									if (shoulsUpdatefilters){
-										updateWellIDFilter(event);
+										updateWellIDFilter(event,e.widget);
 									}
 
 									event.overlay.addListener('rightclick', function () {
@@ -1218,7 +1236,7 @@ prism.registerWidget("googleMaps", {
 								}
 
 
-								function updateWellIDFilter(event) {
+								function updateWellIDFilter(event, widget) {
 									if (event.type == google.maps.drawing.OverlayType.RECTANGLE ||
 										event.type == google.maps.drawing.OverlayType.CIRCLE){
 										var wellFieldName = "Well Unique Id",
@@ -1226,8 +1244,7 @@ prism.registerWidget("googleMaps", {
 											bounds = event.overlay.bounds;
 
 
-
-										var wellField = createDashFilter(wellFieldName,filterFields);
+										var wellField = $$get(widget,'googleMapFilters.shapes') || createDashFilter(wellFieldName,filterFields);
 
 										if (event.type == google.maps.drawing.OverlayType.RECTANGLE ){
 											addLatLngOrAttribute(wellField,bounds);
@@ -1235,12 +1252,14 @@ prism.registerWidget("googleMaps", {
 											addCircleFilter(wellField,event);
 										}
 
-										var options = {
-											save: false,
-											refresh: false
-										};
+										$$set(widget,'googleMapFilters.shapes',wellField);
+										// var options = {
+										// 	save: false,
+										// 	refresh: false
+										// };
 
-										prism.activeDashboard.filters.update(wellField,options);
+
+										// prism.activeDashboard.filters.update(wellField,options);
 										$('#mapRefresh').show();
 									}
 								}
@@ -1263,6 +1282,7 @@ prism.registerWidget("googleMaps", {
 
 									return field;
 								}
+
 								function addCircleFilter(wellField,event){
 									wellField.jaql.filter.or.push(createCircleFilter(event.overlay.center.lat(),
 										event.overlay.center.lng(),
@@ -1323,11 +1343,11 @@ prism.registerWidget("googleMaps", {
 									};
 								}
 
-								function removeWellIDFilter(event){
+								function removeWellIDFilter(event,widget){
 									var wellFieldName = "Well Unique Id",
 										filterFields = prism.activeDashboard.filters.$$items;
 
-									var wellField = createDashFilter(wellFieldName,filterFields);
+									var wellField =  $$get(widget,'googleMapFilters.shapes') || createDashFilter(wellFieldName,filterFields);
 
 									if (event.type == google.maps.drawing.OverlayType.RECTANGLE) {
 										removeLatLngOrAttribute(wellField,event.overlay.bounds);
@@ -1335,19 +1355,12 @@ prism.registerWidget("googleMaps", {
 										removeCircleOrAttribute(wellField,event.overlay);
 									}
 
-									if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
-										//remove filter
-										prism.activeDashboard.filters.remove(wellField);
-									} else {
-
-										var options = {
-											save: false,
-											refresh: false
-										};
-
-										//  Set via JavaScript API
-										prism.activeDashboard.filters.update(wellField,options);
-									}
+									// if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
+									//remove filter	
+									// 	$$set(widget,'googleMapFilters.shapes',{});
+									// } else {
+									$$set(widget,'googleMapFilters.shapes',wellField);
+									// }
 								}
 
 								function removeCircleOrAttribute(wellField,overlay){
@@ -1783,11 +1796,12 @@ prism.registerWidget("googleMaps", {
 								}
 
 								google.maps.event.addListener(map, 'bounds_changed', function() {
-									var bounds = map.getBounds();
-									var NE = bounds.getNorthEast();
-									var SW = bounds.getSouthWest();
-									var zoom = map.getZoom();
-									var center = map.getCenter();
+									var bounds = map.getBounds(),
+										NE = bounds.getNorthEast(),
+										SW = bounds.getSouthWest(),
+										zoom = map.getZoom(),
+										center = map.getCenter();
+
 									e.widget.mapSettings = {
 										"zoomLevel": zoom,
 										"neLat": NE.lat(),
@@ -1796,6 +1810,7 @@ prism.registerWidget("googleMaps", {
 										"swLong": SW.lng(),
 										"center": { lat: center.lat(), lng: center.lng() }
 									};
+
 									$('#mapRefresh').show();
 								});
 
