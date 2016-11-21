@@ -1130,7 +1130,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										});
 										if (colorArray[0]) 
 											colorArray = _.sortBy(colorArray, function(item) {
-												return item.value.toUpperCase();
+												 return (item !== null) ? item.value.toUpperCase() : null;
 											});
 										colorArray = _.compact(colorArray);
 
