@@ -1228,7 +1228,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 												visible : true,
 												draggable : false,
 												icon: (shapeCategory) ? {
-													url: "http://qavm.eastus2.cloudapp.azure.com/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
+													url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
 													anchor: new google.maps.Point(10, 10)
 												} : colors[pinColor],
 												title : qresult[i][measureIndex]["text"], // the formatted value of each marker
