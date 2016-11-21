@@ -4,7 +4,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 		name : "googleMaps",
 		family : "maps",
 		title : "Google Maps",
-		iconSmall : "/plugins/googleMapsWidget/widget-24.png",
+		iconSmall : "/plugins/googleMapsWidget/resources/images/widget-24.png",
 		styleEditorTemplate : null,
 		style : {},
 		// sizing must be stated
