@@ -59,9 +59,9 @@ mod.service('legendsService', [
                 $('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
 
                 $('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody><tr><th>' + (colorCategory ? colorCategory : "No Results")
-                    +'</th><th></th></tbody></table>'));
+                    +'</th><th></th></tr></tbody></table>'));
                 $('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th>'+ (shapeCategory ? shapeCategory : "No Results")
-                    +'</th><th></th><tr></tbody></table>'));
+                    +'</th><th></th></tr></tbody></table>'));
 
                 $('#mapColorLegendContent').height($(map.getDiv()).height() - 70);
                 $('#mapShapeLegendContent').height($(map.getDiv()).height() - 70);
@@ -206,6 +206,16 @@ mod.service('legendsService', [
                 }
                 e.widget.queryMetadata.savedShapes = shapesMetadata;
                 e.widget.changesMade();
+            },
+
+            clear: function(inColorCategory, inShapeCategory) {
+               $("#mapSidebarColorTable tr").remove(); 
+               $("#mapSidebarShapeTable tr").remove(); 
+
+               $("#mapSidebarColorTable tbody").append($('<tr><th>' + (colorCategory ? colorCategory : "No Results")
+                    +'</th><th></th></tr>'));
+               $("#mapSidebarShapeTable tbody").append($('<tr><th>' + (shapeCategory ? shapeCategory : "No Results")
+                    +'</th><th></th></tr>'));
             }
         
         }
