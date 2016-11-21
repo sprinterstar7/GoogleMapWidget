@@ -1,0 +1,354 @@
+
+prism.registerWidget("googleMaps", {
+
+	name : "googleMaps",
+	family : "maps",
+	title : "Google Maps",
+	iconSmall : "/plugins/googleMapsWidget/widget-24.png",
+	styleEditorTemplate : null,
+	style : {},
+	// sizing must be stated
+	sizing: {
+
+		minHeight: 128, //header
+		maxHeight: 2048,
+		minWidth: 128,
+		maxWidth: 2048,
+		height: 640,
+		defaultWidth: 512
+	},
+	data : {
+
+		selection : [],
+		defaultQueryResult : {},
+		
+		panels : [
+		//dimension panel
+			{
+				name : 'latlng',
+				type : 'visible',
+				metadata : {
+
+					types : ['dimensions'],
+					maxitems : -1
+				}
+			}, 
+			{//measure panel
+				name : 'value',
+				type : 'visible',
+				metadata : {
+
+					types : ['measures'],
+					maxitems : 1
+				}
+			},
+			{
+				name : 'color',
+				type : 'series',
+				metadata : {
+					types : ['dimensions'],
+					maxitems : 1
+				}
+			},
+			{
+				name : 'details',
+				type : 'visible',
+				metadata : {
+					types : ['dimensions'],
+					maxitems : -1
+				}
+			},
+			{
+				name: 'filters',
+				type: 'filters',
+				metadata: {
+
+					types: ['dimensions'],
+					maxitems: -1
+				}
+			}
+		],
+
+		canColor: function (widget, panel, item) {
+            return panel.name === "color";
+        },
+		
+		allocatePanel : function (widget, metadataItem) {
+			// measure
+			if (prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("value").items.length === 0) {
+
+				return "value";
+			}
+			
+			// group by
+			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("color").items.length === 0) {
+
+				return "color";
+			}
+			
+			// details
+			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("details").items.length === 0) {
+
+				return "details";
+			}
+
+			// item
+			else if (!prism.$jaql.isMeasure(metadataItem) && widget.metadata.panel("latlng").items.length < 3) {
+
+				return "latlng";
+			}
+		},
+
+		// returns true/ reason why the given item configuration is not/supported by the widget
+		isSupported : function (items) {
+
+			return this.rankMetadata(items, null, null) > -1;
+		},
+
+		// ranks the compatibility of the given metadata items with the widget
+		rankMetadata : function (items, type, subtype) {
+
+			var a = prism.$jaql.analyze(items);
+
+			// require at least 2 dimensions of lat and lng and 1 measure
+			if (a.dimensions.length >= 2 && a.measures.length == 1) {
+
+				return 0;
+			}
+			return -1;
+		},
+
+		// populates the metadata items to the widget
+		populateMetadata : function (widget, items) {
+		
+			var a = prism.$jaql.analyze(items);
+
+			// allocating dimensions
+			widget.metadata.panel("latlng").push(a.dimensions);
+			widget.metadata.panel("value").push(a.measures);
+			widget.metadata.panel("color").push(a.color);
+			widget.metadata.panel("details").push(a.details);
+			widget.metadata.panel("filters").push(a.filters);
+		},
+
+		// builds a jaql query from the given widget
+		buildQuery : function (widget) {
+			//
+			// building jaql query object from widget metadata
+			var query = {
+				datasource : widget.datasource,
+				metadata : []
+			};
+
+			// pushing items
+			widget.metadata.panel("latlng").items.forEach(function (item) {
+
+				query.metadata.push(item);
+			});
+
+			// pushing data
+			query.metadata.push(widget.metadata.panel("value").items[0]);
+			
+			// pushing color
+			var colorPanel = widget.metadata.panel("color");
+			if (colorPanel && colorPanel.items.length > 0) {
+				query.metadata.push(colorPanel.items[0])
+			}
+			
+			// pushing details
+			var detailsPanel = widget.metadata.panel("details");
+			if(detailsPanel){
+				detailsPanel.items.forEach(function (item) {
+					query.metadata.push(item);
+				});
+			}
+			
+			// filters
+			widget.metadata.panel('filters').items.forEach(function (item) {
+
+				item = $$.object.clone(item, true);
+				item.panel = "scope";
+
+				query.metadata.push(item);
+			});
+
+			return query;
+		},
+
+		// prepares the widget-specific query result from the given result data-table
+		processResult : function (widget, queryResult) {
+			// request google maps
+			if(typeof google == "undefined"){
+				$.ajax({
+					type : "GET",
+					url : 'https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&callback=onGoogleMapLoaded',
+					dataType : "script",
+					cache : true
+				});
+			}
+			
+		return queryResult;
+		}
+	},
+	render : function (s, e) {
+		var externalPaths = {
+			markerclusterer: '://rawgit.com/googlemaps/js-marker-clusterer/gh-pages/src/markerclusterer.js',
+			infobox: '://rawgit.com/googlemaps/v3-utility-library/master/infobox/src/infobox.js',
+			overlappingMarkerSpiderfier: '://jawj.github.io/OverlappingMarkerSpiderfier/bin/oms.min.js',
+			images: {
+				cluster:'://rawgit.com/googlemaps/v3-utility-library/master/markerclustererplus/images/m',
+				pinColor:'://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|',
+				pinShadow: '://chart.googleapis.com/chart?chst=d_map_pin_shadow'
+			}
+		};
+
+		// appending
+		var $lmnt = $(e.element),
+			protocol = (window.location.protocol == "https:") ? 'https': 'http';
+
+		window.onGoogleMapLoaded = function () {
+
+			//	Load scripts for Google Maps, Clustering Markers Extension, and Overlapping Markers Extension
+			$.getScript(protocol + externalPaths.markerclusterer, function (data, textStatus) {
+				$.getScript(protocol + externalPaths.infobox, function (data, textStatus) {
+					$.getScript(protocol + externalPaths.overlappingMarkerSpiderfier, function (data, textStatus) {
+
+						//	All 3 scripts loaded, Get the data
+						var qresult = s.queryResult.$$rows; // results
+						var headers = s.rawQueryResult.headers; // headers
+						
+						//	Define function to format numbers w/ commas
+						function formatWithCommas(x) {
+							var parts = x.toString().split(".");
+							return parts[0].replace(/\B(?=(\d{3})+(?=$))/g, ",") + (parts[1] ? "." + parts[1] : "");
+						};
+
+						// initialize map & map options
+						var myOptions = {
+							mapTypeId : google.maps.MapTypeId.ROADMAP
+						};
+						var map = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
+						
+						//	Define bounding object (for auto zoom/center)
+						var bounds = new google.maps.LatLngBounds();
+						
+						//	Create an object to handle multiple markers at the same coordinates
+						var omsOptions = {
+								markersWontMove : true,
+								markersWontHide : true,
+								keepSpiderfied : true
+						};
+						var oms = new OverlappingMarkerSpiderfier(map, omsOptions);
+						
+						//	Define the info window for popups
+						var infowindow = new google.maps.InfoWindow();
+
+						//	Init Variables
+						var i = 0,
+							dataSize = qresult.length,
+							j,
+							headersSize = headers.length,
+							markers = [],
+							markerText,
+							clusterLabel = '';
+										
+						//	Create each marker for the map
+						for (; i < dataSize; i++) {
+						
+							//	Define the info window HTML
+							markerText = '<span style="font-family:arial,sans-serif; line-height:150%;" ' 
+								+ ' onclick="google.maps.closeInfoWindow()" >' 
+								+ '<span style="line-height:200%;font-size:120%;text-decoration:underline"><b>' 
+								+ 'INFO' + '</b></span>';
+
+							//	Add the rest of data to be presented in the info window
+							var measureIndex = 2;
+								j = measureIndex;
+							for (; j < headersSize; j++) {
+								markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
+							}
+							markerText += ' </span>';
+							
+							//	Get the latitude and longitude for this marker
+							var lat = parseFloat(qresult[i][0]["data"]); // latitude
+							var lng = parseFloat(qresult[i][1]["data"]); // longitude
+							if(isNaN(lat) || isNaN(lng)) continue;
+
+							//	Get the measure label for the clusters
+							if (!clusterLabel) {
+								clusterLabel = headers[measureIndex];
+							}
+							
+							//	Determine the marker color from Sisense, or use the default
+							var pinColor = 'FE7569';
+							if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
+								pinColor = qresult[i][3].color.replace("#","");
+							}
+
+							//	Create the marker image and shadow
+							var pinImage = new google.maps.MarkerImage(protocol + externalPaths.images.pinColor + pinColor,
+								new google.maps.Size(21, 34),
+								new google.maps.Point(0,0),
+								new google.maps.Point(10, 34));
+							var pinShadow = new google.maps.MarkerImage(protocol + externalPaths.images.pinShadow,
+								new google.maps.Size(40, 37),
+								new google.maps.Point(0, 0),
+								new google.maps.Point(12, 35));
+
+							// Create the marker
+							var marker = new google.maps.Marker({
+								map : map,
+								position : new google.maps.LatLng(lat, lng),
+								raiseOnDrag : false,
+								visible : true,
+								draggable : false,
+								icon : pinImage,
+								shadow: pinShadow,
+								title : qresult[i][measureIndex]["text"], // the formatted value of each marker
+								value : qresult[i][measureIndex]["data"] // the value of each marker
+							});
+							
+							//	Add data to the marker
+							marker.sisenseTooltip = markerText;
+							
+							//	Add the marker to the OMS
+							oms.addMarker(marker);
+							
+							//	Add the marker's position to the boundary object
+							bounds.extend(marker.position);
+							
+							//	Add the marker to the array of all markers
+							markers.push(marker);
+						}
+						
+						//Add event listeners to each marker, to popup the info window
+						oms.addListener('click', function(marker, event) {		
+
+							infowindow.setContent(marker.sisenseTooltip);
+							infowindow.open(map, marker);
+						});
+							
+						
+						
+						// adjust info window style, if necessary
+						var infowindow = new InfoBox({							
+							closeBoxURL : ""
+						});
+							
+						// 	Auto Zoom/Center Map
+						map.fitBounds(bounds);
+							
+						
+					});
+				});
+			});
+		}
+		if(typeof google != "undefined"){
+		// first call to onGoogleMapLoaded is done when google maps loaded once loaded, render will call onGoogleMapLoaded - its done to avoid multiple invocation of onGoogleMapLoaded
+			window.onGoogleMapLoaded();
+		}
+	
+	},
+
+	destroy : function (s, e) {}
+});
