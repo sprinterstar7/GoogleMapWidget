@@ -1,7 +1,7 @@
 {
 	name: "googleMapsWidget",
 	source: [
-		"legendsService.js",
+		"services/legendsService.js",
 	  "general.js",
 		"widget.js"
 	],
