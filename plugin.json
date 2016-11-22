@@ -1,12 +1,17 @@
 {
-	name: "googleMapsWidget",
-	source: [
+	"name" : "googleMapsWidget",
+	"source" : [
+		"external/client.js", //https://apis.google.com/js/client.js
+		"services/countyService.js",
+		"services/drawingService.js",
 		"services/legendsService.js",
+		"services/kmlService.js",
+		"services/helperService.js",
 	  "general.js",
 		"widget.js"
 	],
 
-  style: [
+  "style" : [
     "widget.css",
     "font-awesome-4.7.0/css/font-awesome.css"
   ]
