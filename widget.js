@@ -790,8 +790,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
 										e.widget.changesMade();
 
-										console.log(shapesMetadata);
-
 										if ($('#mapSidebar').length < 1) 
 											$legendsService.init(colorCategory, shapeCategory, shapesMetadata, map, e, markers);
 										else
