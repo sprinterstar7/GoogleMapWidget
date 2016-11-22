@@ -5,7 +5,8 @@ mod.service('countyService', [
         var self = this;
 
         //Define your private variables
-        var countyLabels = [], google, map,
+        var countyLabels = [], 
+        widgetMap, google, map,
         _countyListener = null,
         countyLabels, countyLayer;
 
