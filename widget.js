@@ -1,3 +1,7 @@
+var countyLabels;
+var countyLayer;
+var mapupdater;
+
 prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsService) {
 	prism.registerWidget("googleMaps", {
 
@@ -343,6 +347,20 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										var qresult = s.queryResult.$$rows; // results
 										var headers = s.rawQueryResult.headers; // headers
 
+										/*
+										 * Widget scope Variables
+										 */
+										
+										// KML
+										var _kmlControlsShowing = false,
+											_presentKMLLayers = [],
+											_layersClickedOnce = [],
+											_layerRetries = 0;
+
+										// Shape overlays
+										var overlays = [];
+
+
 										var colorCategory;
 										if(e.widget.metadata.panel('color') && e.widget.metadata.panel('color').items[0] && e.widget.metadata.panel('color').items[0].jaql && e.widget.metadata.panel('color').items[0].jaql.column) {
 											colorCategory = e.widget.metadata.panel('color').items[0].jaql.column;
@@ -490,226 +508,406 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										};
 										var widgetMap = getWidgetMap(e.widget.oid);
 
-										if (!widgetMap){
+										if (!widgetMap){ // Initialize initial map controls
 											widgetMap = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
 											setWidgetMap(e.widget.oid,widgetMap);
+											
+											/*
+											 * Map bound update events
+											 */
+											google.maps.event.addListener(widgetMap, 'bounds_changed', setMapTimer);
+
+											google.maps.event.addListener(widgetMap, 'zoom_changed', function() {
+												switch(map.getZoom()) {
+													case 6: countyLayer.setMap(map);
+														break;
+													case 5: countyLayer.setMap(null);
+														break;
+													case 8: if (_countyListener) {
+														_countyListener.remove();
+														_countyListener = null;
+													}
+														_.each(countyLabels, function (label) {
+															label.setMap(null);
+														});
+														break;
+													case 9: if (!_countyListener) {
+														_countyListener = google.maps.event.addListener(map, 'bounds_changed', function () {
+															_.each(countyLabels, function (label) {
+																if(map.getBounds().contains(label.position)) {
+																	if (label.map == null) {
+																		label.setMap(map);
+																	}
+																}
+																else {
+																	label.setMap(null);
+																}
+															});
+														});
+													}
+														break;
+												}
+											});
+											
+											/*
+											 * KML Dropdown Element
+											 */ 
+											var kmlLayers = [
+												{ id: 5, title: 'Proppant Mine Locations' },
+												{ id: 4, title: 'Transload Terminal Locations' },
+												{ id: 0, title: 'US Rail Network' },
+												{ id: 6, title: 'Eagleford Basin' }
+											];
+											function CenterControl(controlDiv, map) {
+
+												// Set CSS for the control border.
+												var control = document.createElement('div');
+												control.id = "KMLLayerButtonGroup";
+												controlDiv.appendChild(control);
+
+												// Set list
+												var ul = document.createElement('ul');
+												ul.className = "dropdown-memu";
+
+												var controlHide = document.createElement('li');
+												controlHide.id = "KMLLayerButtonGroupHide";
+												controlHide.innerHTML = "KML Layer Selection"
+
+												var iRight = document.createElement('i');
+												iRight.className = "fa fa-chevron-down";
+												controlHide.appendChild(iRight);
+
+												ul.appendChild(controlHide);
+
+												controlHide.addEventListener('click', function () {
+													if (_kmlControlsShowing) {
+														iRight.className = "fa fa-chevron-down";
+														var x = document.getElementsByClassName("kmlItem");
+														var i;
+														for (i = 0; i < x.length; i++) {
+															x[i].style.display = "none";
+														}
+														_kmlControlsShowing = false;
+													}
+													else {
+														iRight.className = "fa fa-chevron-up";
+														var x = document.getElementsByClassName("kmlItem");
+														var i;
+														for (i = 0; i < x.length; i++) {
+															x[i].style.display = "";
+														}
+														_kmlControlsShowing = true;
+													}
+												});
+
+												_.each(kmlLayers, function (layer) {
+													var li = document.createElement('li');
+													li.className = "kmlItem"
+													li.style.display = "none";
+													var a = document.createElement('a');
+													a.id = "KMLLayerCheckBox" + layer.id;
+
+													// Setup the click event listeners: simply set the map to Chicago.
+													a.addEventListener('click', function () {
+														setKMLLayer(layer.id);
+													});
+
+													a.innerHTML = layer.title;
+
+													li.appendChild(a);
+													ul.appendChild(li);
+												});
+
+												control.appendChild(ul);
+											}
+
+											var controlDiv = document.createElement('div');
+											CenterControl(controlDiv, widgetMap);
+											controlDiv.index = 1;
+											widgetMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+
+											/*
+											 * Draw Manager Control
+											 */
+											widgetMap.drawManager = new google.maps.drawing.DrawingManager({
+												drawingControl: true,
+												drawingControlOptions: {
+													position: google.maps.ControlPosition.TOP_CENTER,
+													drawingModes: [
+														google.maps.drawing.OverlayType.CIRCLE,
+														google.maps.drawing.OverlayType.RECTANGLE/*,
+														google.maps.drawing.OverlayType.POLYLINE*/
+													]
+												},
+												circleOptions: {
+													fillColor: '#d22927',
+													fillOpacity: 0.5,
+													strokeWeight: 1,
+													strokeColor: '#cccccc',
+													clickable: true,
+													editable: false,
+													suppressUndo: true
+												},
+												rectangleOptions: {
+													fillColor: '#d22927',
+													fillOpacity: 0.5,
+													strokeWeight: 1,
+													strokeColor: '#cccccc',
+													clickable: true,
+													editable: false,
+													draggable: false,
+													suppressUndo: true
+												},
+												polylineOptions: {
+													fillColor: '#dddddd',
+													fillOpacity: 0.5,
+													strokeWeight: 3,
+													strokeColor: '#cccccc',
+													clickable: true,
+													editable: false,
+													draggable: true,
+													suppressUndo: true
+												}
+											});
+											widgetMap.drawManager.setMap(widgetMap);
+											google.maps.event.addListener(widgetMap.drawManager, 'overlaycomplete', function (event) {
+												var shoulsUpdatefilters = false,
+													dashfilters = prism.activeDashboard.filters.$$items;
+
+												var overlay;
+
+												if(event.dontAdd) {
+
+												}
+												else if(event.type != google.maps.drawing.OverlayType.POLYLINE) {
+													if(event.type == google.maps.drawing.OverlayType.RECTANGLE) {
+														var filter = _.find(dashfilters,function(item){
+															return compareRecFilter(item,event.overlay.bounds);
+														});
+
+														if (!filter){
+															shoulsUpdatefilters = true;
+														}
+
+														overlay = {
+															type: event.type,
+															bounds: event.overlay.bounds
+														}
+													}
+													else if(event.type == google.maps.drawing.OverlayType.CIRCLE) {
+														var filter = _.find(dashfilters,function(item){
+															return compareCircleFilter(item,event.overlay.radius,event.overlay.center.lat(),event.overlay.center.lng());
+														});
+
+														if (!filter){
+															shoulsUpdatefilters = true;
+														}
+
+														overlay = {
+															type: event.type,
+															radius: event.overlay.radius,
+															center: { lat: event.overlay.center.lat(), lng: event.overlay.center.lng() }
+														}
+													}
+													else if(event.type == google.maps.drawing.OverlayType.POLYGON) {
+														overlay = {
+															type: event.type,
+															latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
+														}
+													}
+													// else if(event.type == google.maps.drawing.OverlayType.POLYLINE) {
+													// 	overlay = {
+													// 		type: event.type,
+													// 		latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
+													// 	}
+													// }
+
+													overlays.push(overlay);
+													e.widget.queryMetadata.overlays = overlays;
+												}
+
+												if (shoulsUpdatefilters){
+													updateWellIDFilter(event,e.widget);
+												}
+
+												event.overlay.addListener('rightclick', function () {
+													eraseShape(event);
+												});
+											});
+											
+											google.maps.event.addListenerOnce(widgetMap, 'idle', function () { // Create Widget's Refresh button
+
+												if ($('#mapRefresh').length < 1) {
+
+													var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results">' +
+														'<div class="update-icon"></div>' +
+														'</div>');
+
+													widgetMap.controls[google.maps.ControlPosition.RIGHT].push(mapRefreshButton[0]);
+
+													$('#mapRefresh').on('mouseover', function () {
+														$('#mapRefresh a i').addClass('fa-spin').addClass('fa-fw');
+													});
+													$('#mapRefresh').on('mouseout', function () {
+														$('#mapRefresh a i').removeClass('fa-spin').removeClass('fa-fw');
+													});
+
+													$('#mapRefresh').on('click', function () {
+														$('#mapRefresh').hide();
+
+														var mapBounds = map.getBounds();
+														var NE = mapBounds.getNorthEast();
+														var SW = mapBounds.getSouthWest();
+
+														var lat = {
+															"jaql": {
+																"table": "Well",
+																"column": "Latitude",
+																"dim": "[Well.Latitude]",
+																"datatype": "numeric",
+																"title": "Latitude",
+																"filter": {
+																	"from": SW.lat(),
+																	"to": NE.lat()
+																}
+															}
+														};
+
+														var long = {
+															"jaql": {
+																"table": "Well",
+																"column": "Longitude",
+																"dim": "[Well.Longitude]",
+																"datatype": "numeric",
+																"title": "Longitude",
+																"filter": {
+																	"from": SW.lng(),
+																	"to": NE.lng()
+																}
+															}
+														};
+
+														var options = {
+															save: true,
+															refresh: false
+														};
+
+														if ($$get(e.widget,'googleMapFilters.shapes')){
+															var wellField = $$get(e.widget,'googleMapFilters.shapes');
+
+															if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
+
+																delete wellField.jaql.filter.filter;
+																try{
+																	prism.activeDashboard.filters.remove(wellField,options);
+																} catch (Error) {
+																	console.log("filter 'well unique id' does not exist on the dashboard");
+																}
+															} else {
+																prism.activeDashboard.filters.update(e.widget.googleMapFilters.shapes,options);
+															}
+
+															delete e.widget.googleMapFilters.shapes;
+														}
+
+														//  Set via JavaScript API
+														prism.activeDashboard.filters.update(lat,options);
+														prism.activeDashboard.filters.update(long,options);
+
+														prism.activeDashboard.$dashboard.updateDashboard(prism.activeDashboard,"filters");
+
+														//  Make sure the widgets get refreshed
+														var refreshDashboard = function(){
+															$.each(prism.activeDashboard.widgets.$$widgets,function(){
+																this.refresh();
+															})
+														};
+
+														e.widget.changesMade();
+
+														setTimeout(refreshDashboard,100);
+													});
+
+													$('#mapRefresh').hide();
+												}
+											});
 										}
 
 										map = widgetMap;
+										var _drawManager = map.drawManager;
 
-										//Add refresh button
-										google.maps.event.addListenerOnce(map, 'idle', function () {
-
-											if ($('#mapRefresh').length < 1) {
-
-												var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results">' +
-													'<div class="update-icon"></div>' +
-													'</div>');
-
-												map.controls[google.maps.ControlPosition.RIGHT].push(mapRefreshButton[0]);
-
-												$('#mapRefresh').on('mouseover', function () {
-													$('#mapRefresh a i').addClass('fa-spin').addClass('fa-fw');
-												});
-												$('#mapRefresh').on('mouseout', function () {
-													$('#mapRefresh a i').removeClass('fa-spin').removeClass('fa-fw');
-												});
-
-												$('#mapRefresh').on('click', function () {
-													$('#mapRefresh').hide();
-
-													var mapBounds = map.getBounds();
-													var NE = mapBounds.getNorthEast();
-													var SW = mapBounds.getSouthWest();
-
-													var lat = {
-														"jaql": {
-															"table": "Well",
-															"column": "Latitude",
-															"dim": "[Well.Latitude]",
-															"datatype": "numeric",
-															"title": "Latitude",
-															"filter": {
-																"from": SW.lat(),
-																"to": NE.lat()
-															}
-														}
-													};
-
-													var long = {
-														"jaql": {
-															"table": "Well",
-															"column": "Longitude",
-															"dim": "[Well.Longitude]",
-															"datatype": "numeric",
-															"title": "Longitude",
-															"filter": {
-																"from": SW.lng(),
-																"to": NE.lng()
-															}
-														}
-													};
-
-													var options = {
-														save: true,
-														refresh: false
-													};
-
-													if ($$get(e.widget,'googleMapFilters.shapes')){
-														var wellField = $$get(e.widget,'googleMapFilters.shapes');
-
-														if (!$$get(wellField,"jaql.filter.or") || $$get(wellField,"jaql.filter.or").length == 0){
-
-															delete wellField.jaql.filter.filter;
-															try{
-																prism.activeDashboard.filters.remove(wellField,options);
-															} catch (Error) {
-																console.log("filter 'well unique id' does not exist on the dashboard");
-															}
-														} else {
-															prism.activeDashboard.filters.update(e.widget.googleMapFilters.shapes,options);
-														}
-
-														delete e.widget.googleMapFilters.shapes;
-													}
-
-													//  Set via JavaScript API
-													prism.activeDashboard.filters.update(lat,options);
-													prism.activeDashboard.filters.update(long,options);
-
-													prism.activeDashboard.$dashboard.updateDashboard(prism.activeDashboard,"filters");
-
-													//  Make sure the widgets get refreshed
-													var refreshDashboard = function(){
-														$.each(prism.activeDashboard.widgets.$$widgets,function(){
-															this.refresh();
-														})
-													};
-
-													e.widget.changesMade();
-
-													setTimeout(refreshDashboard,100);
-												});
-
-												$('#mapRefresh').hide();
-											}
-										});
-
-										// County lines
-										var _countyLabels = [];
+										// County lines and labels
 										var _countyListener = null;
-										var countyLayer = new google.maps.FusionTablesLayer({
-											query: {
-												select: 'geometry, County Name',
-												from: '1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa'
-											},
-											suppressInfoWindows: true,
-											styles: [{
-												polygonOptions: {
-													fillColor: '#0000FF',
-													fillOpacity: 0.01,
-													strokeColor: '#FFFFFF'
+										if (!countyLayer) {
+											countyLayer = new google.maps.FusionTablesLayer({
+												query: {
+													select: 'geometry, County Name',
+													from: '1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa'
+												},
+												suppressInfoWindows: true,
+												styles: [{
+													polygonOptions: {
+														fillColor: '#0000FF',
+														fillOpacity: 0.01,
+														strokeColor: '#FFFFFF'
+													}
+												}]
+											});
+										
+											countyLabels = [];
+											google.load('visualization', '1.0',
+												{
+													packages: ['corechart', 'table', 'geomap'],
+													callback: initializeCountyNames
 												}
-											}]
-										});
+											);
 
-										google.load('visualization', '1.0',
-											{
-												packages: ['corechart', 'table', 'geomap'],
-												callback: initializeCountyNames
+											function initializeCountyNames() {
+												//3215 is the number of counties in this table
+												//TOP 500 is hard limit imposed by google.
+												//Iterate results 500 at a time by using OFFSET and LIMIT
+												for (var i = 0; i < 7; i ++) {
+													var tableId = "1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa";
+													var queryStr = "SELECT 'State-County', geometry FROM " + tableId + " OFFSET " + (i * 500) + " LIMIT 500";
+													var queryText = encodeURIComponent(queryStr);
+													var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + queryText);
+													query.send(displayCountyText);
+												}
 											}
-										);
 
-										function initializeCountyNames() {
-											//3215 is the number of counties in this table
-											//TOP 500 is hard limit imposed by google.
-											//Iterate results 500 at a time by using OFFSET and LIMIT
-											for (var i = 0; i < 7; i ++) {
-												var tableId = "1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa";
-												var queryStr = "SELECT 'State-County', geometry FROM " + tableId + " OFFSET " + (i * 500) + " LIMIT 500";
-												var queryText = encodeURIComponent(queryStr);
-												var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + queryText);
-												query.send(displayCountyText);
+											function displayCountyText(response) {
+												var numRows = response.getDataTable().getNumberOfRows();
+												for (i = 0; i < numRows; i++) {
+													var name = response.getDataTable().getValue(i, 0);
+													var polygon = response.getDataTable().getValue(i, 1);
+													var nameStr = name.toString();
+													var polygonArray = polygon.toString().replace("<Polygon><outerBoundaryIs><LinearRing><coordinates>", "").replace("</coordinates></LinearRing></outerBoundaryIs></Polygon>", "").split(" ");
+													var lat = 0;
+													var lng = 0;
+													var total = 0;
+
+													_.each(polygonArray, function (arr) {
+														var coord = arr.split(",")
+														lat += Number(coord[0]);
+														lng += Number(coord[1]);
+														total += 1;
+													});
+
+													lat = lat / total;
+													lng = lng / total;
+
+													var mapLabel = new MapLabel({
+														text: nameStr,
+														position: new google.maps.LatLng(lng, lat),
+														map: null,
+														strokeWeight: 5,
+														fontSize: 16,
+														align: 'center'
+													});
+													countyLabels.push(mapLabel);
+												};
 											}
 										}
-
-										function displayCountyText(response) {
-											var numRows = response.getDataTable().getNumberOfRows();
-											for (i = 0; i < numRows; i++) {
-												var name = response.getDataTable().getValue(i, 0);
-												var polygon = response.getDataTable().getValue(i, 1);
-												var nameStr = name.toString();
-												var polygonArray = polygon.toString().replace("<Polygon><outerBoundaryIs><LinearRing><coordinates>", "").replace("</coordinates></LinearRing></outerBoundaryIs></Polygon>", "").split(" ");
-												var lat = 0;
-												var lng = 0;
-												var total = 0;
-
-												_.each(polygonArray, function (arr) {
-													var coord = arr.split(",")
-													lat += Number(coord[0]);
-													lng += Number(coord[1]);
-													total += 1;
-												});
-
-												lat = lat / total;
-												lng = lng / total;
-
-												var mapLabel = new MapLabel({
-													text: nameStr,
-													position: new google.maps.LatLng(lng, lat),
-													map: null,
-													strokeWeight: 5,
-													fontSize: 16,
-													align: 'center'
-												});
-												_countyLabels.push(mapLabel);
-											};
-										}
-
-										// Draw Manager
-										var _drawManager = new google.maps.drawing.DrawingManager({
-											drawingControl: true,
-											drawingControlOptions: {
-												position: google.maps.ControlPosition.TOP_CENTER,
-												drawingModes: [
-													google.maps.drawing.OverlayType.CIRCLE,
-													google.maps.drawing.OverlayType.RECTANGLE/*,
-													google.maps.drawing.OverlayType.POLYLINE*/
-												]
-											},
-											circleOptions: {
-												fillColor: '#d22927',
-												fillOpacity: 0.5,
-												strokeWeight: 1,
-												strokeColor: '#cccccc',
-												clickable: true,
-												editable: false,
-												suppressUndo: true
-											},
-											rectangleOptions: {
-												fillColor: '#d22927',
-												fillOpacity: 0.5,
-												strokeWeight: 1,
-												strokeColor: '#cccccc',
-												clickable: true,
-												editable: false,
-												draggable: false,
-												suppressUndo: true
-											},
-											polylineOptions: {
-												fillColor: '#dddddd',
-												fillOpacity: 0.5,
-												strokeWeight: 3,
-												strokeColor: '#cccccc',
-												clickable: true,
-												editable: false,
-												draggable: true,
-												suppressUndo: true
-											}
-										});
-										_drawManager.setMap(map);
-
-										var overlays = [];
 
 										if(e.widget.queryMetadata) {
 											//Do nothing
@@ -722,74 +920,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 											overlays = e.widget.queryMetadata.overlays;
 										};
 
-										google.maps.event.addListener(_drawManager, 'overlaycomplete', function (event) {
-											var shoulsUpdatefilters = false,
-												dashfilters = prism.activeDashboard.filters.$$items;
-
-											var overlay;
-
-											if(event.dontAdd) {
-
-											}
-											else if(event.type != google.maps.drawing.OverlayType.POLYLINE) {
-												if(event.type == google.maps.drawing.OverlayType.RECTANGLE) {
-													var filter = _.find(dashfilters,function(item){
-														return compareRecFilter(item,event.overlay.bounds);
-													});
-
-													if (!filter){
-														shoulsUpdatefilters = true;
-													}
-
-													overlay = {
-														type: event.type,
-														bounds: event.overlay.bounds
-													}
-												}
-												else if(event.type == google.maps.drawing.OverlayType.CIRCLE) {
-													var filter = _.find(dashfilters,function(item){
-														return compareCircleFilter(item,event.overlay.radius,event.overlay.center.lat(),event.overlay.center.lng());
-													});
-
-													if (!filter){
-														shoulsUpdatefilters = true;
-													}
-
-													overlay = {
-														type: event.type,
-														radius: event.overlay.radius,
-														center: { lat: event.overlay.center.lat(), lng: event.overlay.center.lng() }
-													}
-												}
-												else if(event.type == google.maps.drawing.OverlayType.POLYGON) {
-													overlay = {
-														type: event.type,
-														latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
-													}
-												}
-												// else if(event.type == google.maps.drawing.OverlayType.POLYLINE) {
-												// 	overlay = {
-												// 		type: event.type,
-												// 		latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
-												// 	}
-												// }
-
-												overlays.push(overlay);
-												e.widget.queryMetadata.overlays = overlays;
-												//e.widget.changesMade();
-											}
-
-											if (shoulsUpdatefilters){
-												updateWellIDFilter(event,e.widget);
-											}
-
-											event.overlay.addListener('rightclick', function () {
-												eraseShape(event);
-											});
-										});
-
-										if(overlays) {
-											// Redraw shape overlays onto the map
+										if(overlays) { // Redraw shape overlays onto the map
 											_.each(overlays, function(overlay){
 												switch (overlay.type) {
 													case google.maps.drawing.OverlayType.CIRCLE:
@@ -939,7 +1070,6 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 											}
 
 											e.widget.queryMetadata.overlays = overlays;
-											// e.widget.changesMade();
 
 											$('#mapRefresh').show();
 										}
@@ -1274,10 +1404,14 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 
 										map.markers = markers;
 
+										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
 										e.widget.changesMade();
 
-										$legendsService.init(colorCategory, shapeCategory, shapesMetadata, map, e, markers);
+										if ($('#mapSidebar').length < 1) 
+											$legendsService.init(colorCategory, shapeCategory, shapesMetadata, map, e, markers);
+										else
+											$legendsService.clear(colorCategory, shapeCategory)
 
 										if(shapeArray) {
 											$legendsService.addRowsToShapeBy(shapeArray);
@@ -1287,38 +1421,19 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 											$legendsService.addRowsToColorLegend(colorArray);
 										}
 
-										google.maps.event.addListener(map, 'bounds_changed', function() {
-											var bounds = map.getBounds(),
-												NE = bounds.getNorthEast(),
-												SW = bounds.getSouthWest(),
-												zoom = map.getZoom(),
-												center = map.getCenter();
-
-											e.widget.mapSettings = {
-												"zoomLevel": zoom,
-												"neLat": NE.lat(),
-												"neLong": NE.lng(),
-												"swLat": SW.lat(),
-												"swLong": SW.lng(),
-												"center": { lat: center.lat(), lng: center.lng() }
-											};
-
-											$('#mapRefresh').show();
-										});
-
-										//Add event listeners to each marker, to popup the info window
-										/*oms.addListener('click', function(marker, event) {
+										/*//Add event listeners to each marker, to popup the info window
+										oms.addListener('click', function(marker, event) {
 										infowindow.setContent(marker.sisenseTooltip);
 										infowindow.open(map, marker);
-										});*/
+										});
 
 										// adjust info window style, if necessary
-										/*var infowindow = new InfoBox({
+										var infowindow = new InfoBox({
 										closeBoxURL : ""
-										});*/
+										});
 
 										//	Add hover popup for clusters
-										/*google.maps.event.addListener(markerCluster, 'mouseover', function (cluster) {
+										google.maps.event.addListener(markerCluster, 'mouseover', function (cluster) {
 										var sum = 0;
 										_.each(cluster["markers_"], function (item) {
 										sum += parseFloat(item["value"]);
@@ -1328,7 +1443,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										//infowindow.open(map);
 										//infowindow.setPosition(cluster.getCenter());
 										});
-										/*
+										
 										//	Remove hover popup for clusters
 										google.maps.event.addListener(markerCluster, 'mouseout', function (cluster) {
 										infowindow.close();
@@ -1342,75 +1457,33 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										infowindow.close();
 										};*/
 
-										google.maps.event.addListener(map, 'zoom_changed', function() {
-											switch(map.getZoom()) {
-												case 6: countyLayer.setMap(map);
-													break;
-												case 5: countyLayer.setMap(null);
-													break;
-												case 8: if (_countyListener) {
-													_countyListener.remove();
-													_countyListener = null;
-												}
-													_.each(_countyLabels, function (label) {
-														label.setMap(null);
-													});
-													break;
-												case 9: if (!_countyListener) {
-													_countyListener = google.maps.event.addListener(map, 'bounds_changed', function () {
-														_.each(_countyLabels, function (label) {
-															if(map.getBounds().contains(label.position)) {
-																if (label.map == null) {
-																	label.setMap(map);
-																}
-															}
-															else {
-																label.setMap(null);
-															}
-														});
-													});
-												}
-													break;
-											}
-										});
-
-										// Create Sidebar rows, tables
-										function createSidebarTableHeader(tableId, numCols, headers) {
-											var headerRow = "<tr>";
-											var i = 0;
-											for (i; i < numCols; i++) {
-												if (headers && headers.length > 0 && headers[i]) {
-													headerRow += "<th>" + headers[i] + "</th>";
-												}
-												else {
-													headerRow += "<th></th>";
-												}
-											}
-											headerRow += "</tr>";
-											$('#'+tableId).append($(headerRow));
+										function setMapTimer() {
+											clearTimeout(mapupdater);
+											mapupdater = setTimeout(updateMapSettings, 500);
 										}
 
-										function createSidebarTableRow(tableId, numCols, headers) {
-											var tableRow = "<tr>";
-											var i = 0;
-											for (i; i < numCols; i++) {
-												if (headers && headers.length > 0 && headers[i]) {
-													tableRow += "<td>" + headers[i] + "</td>";
-												}
-												else {
-													tableRow += "<td></td>";
-												}
-											}
-											tableRow += "</tr>";
-											$('#'+tableId).append($(tableRow));
+										function updateMapSettings() {
+											var bounds = map.getBounds(),
+											NE = bounds.getNorthEast(),
+											SW = bounds.getSouthWest(),
+											zoom = map.getZoom(),
+											center = map.getCenter();
+
+											e.widget.mapSettings = {
+												"zoomLevel": zoom,
+												"neLat": NE.lat(),
+												"neLong": NE.lng(),
+												"swLat": SW.lat(),
+												"swLong": SW.lng(),
+												"center": { lat: center.lat(), lng: center.lng() }
+											};
+
+											$('#mapRefresh').show();
 										}
-										// End Sidebar functionality
 
-										// KML Piece
-										var _presentKMLLayers = [];
-										var _layersClickedOnce = [];
-										var _layerRetries = 0;
-
+										/*
+										 * KML Piece
+										 */
 										function setKMLLayer(kmlId) {
 											//All US Rail Networks
 											if (kmlId === 0) {
@@ -1575,95 +1648,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 												}
 											});
 										}
-
-										var kmlLayers = [
-											{
-												id: 5,
-												title: 'Proppant Mine Locations'
-											},
-											{
-												id: 4,
-												title: 'Transload Terminal Locations'
-											},
-											{
-												id: 0,
-												title: 'US Rail Network'
-											},
-											{
-												id: 6,
-												title: 'Eagleford Basin'
-											}
-										];
-
-										var _kmlControlsShowing = false;
-										function CenterControl(controlDiv, map) {
-
-											// Set CSS for the control border.
-											var control = document.createElement('div');
-											control.id = "KMLLayerButtonGroup";
-											controlDiv.appendChild(control);
-
-											// Set list
-											var ul = document.createElement('ul');
-											ul.className = "dropdown-memu";
-
-											var controlHide = document.createElement('li');
-											controlHide.id = "KMLLayerButtonGroupHide";
-											controlHide.innerHTML = "KML Layer Selection"
-
-											var iRight = document.createElement('i');
-											iRight.className = "fa fa-chevron-down";
-											controlHide.appendChild(iRight);
-
-											ul.appendChild(controlHide);
-
-											controlHide.addEventListener('click', function () {
-												if (_kmlControlsShowing) {
-													iRight.className = "fa fa-chevron-down";
-													var x = document.getElementsByClassName("kmlItem");
-													var i;
-													for (i = 0; i < x.length; i++) {
-														x[i].style.display = "none";
-													}
-													_kmlControlsShowing = false;
-												}
-												else {
-													iRight.className = "fa fa-chevron-up";
-													var x = document.getElementsByClassName("kmlItem");
-													var i;
-													for (i = 0; i < x.length; i++) {
-														x[i].style.display = "";
-													}
-													_kmlControlsShowing = true;
-												}
-											});
-
-											_.each(kmlLayers, function (layer) {
-												var li = document.createElement('li');
-												li.className = "kmlItem"
-												li.style.display = "none";
-												var a = document.createElement('a');
-												a.id = "KMLLayerCheckBox" + layer.id;
-
-												// Setup the click event listeners: simply set the map to Chicago.
-												a.addEventListener('click', function () {
-													setKMLLayer(layer.id);
-												});
-
-												a.innerHTML = layer.title;
-
-												li.appendChild(a);
-												ul.appendChild(li);
-											});
-
-											control.appendChild(ul);
-
-										}
-
-										var controlDiv = document.createElement('div');
-										CenterControl(controlDiv, map);
-										controlDiv.index = 1;
-										map.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+										
 									});
 								});
 							});
