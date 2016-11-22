@@ -679,11 +679,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											shapesMetadata = e.widget.queryMetadata.savedShapes;
 										};
 
-										if(shapesMetadata) {
-											savedShapesCategory = _.find(shapesMetadata, function(category){
-												return category.column == shapeCategory;
-											})
-										}
+										var tempShapesCategory = {
+											category: shapeCategory ? shapeCategory : null,
+											items: []
+										};
 										
 										map.clearMarkers();
 
@@ -723,8 +722,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											}
 
 											var shape = "circle";
-											if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
-												var item = _.find(savedShapesCategory.items, function(item) {
+											if(shapeCategory && shapesMetadata && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
+												var item = _.find(shapesMetadata.items, function(item) {
 													return item.value == qresult[i][4].data;
 												});
 												if(item) {
@@ -756,30 +755,19 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												shape : (qresult[i][4] && qresult[i][4].data) ? qresult[i][4].data : null
 											});
 
-											if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
-												var item = _.find(savedShapesCategory.items, function(item){
+											if(shapeCategory  && qresult[i][4] && qresult[i][4].data) {
+												var item = _.find(tempShapesCategory.items, function(item){
 													return item.value == data;
 												});
-												if(item && item.shape) {
+												if(item && item.shape && item.shape !== shape) {
 													item.shape = shape;
 												}
 												else {
-													savedShapesCategory.items.push({
+													tempShapesCategory.items.push({
 														value : qresult[i][4].data,
-														shape: "circle"
+														shape: shape
 													})
 												}
-											}
-											else if (shapeCategory && qresult[i][4] && qresult[i][4].data) {
-												var cat = {
-													column : shapeCategory,
-													items : [{
-														value : qresult[i][4].data,
-														shape: "circle"
-													}]
-												}
-												shapesMetadata.push(cat);
-												savedShapesCategory = cat;
 											}
 										}
 										//END for
@@ -787,7 +775,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										map.markers = markers;
 
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
-										e.widget.queryMetadata.savedShapes = shapesMetadata;
+										e.widget.queryMetadata.savedShapes = shapesMetadata = tempShapesCategory;
 										e.widget.changesMade();
 
 										if ($('#mapSidebar').length < 1) 
