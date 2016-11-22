@@ -1,8 +1,8 @@
-var countyLabels;
-var countyLayer;
+
 var mapupdater;
 
-prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsService) {
+prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsWidget.services.legendsService', 
+	'plugin-googleMapsWidget.services.kmlService', 'plugin-googleMapsWidget.services.countyService', function($helperService, $legendsService, $kmlService, $countyService) {
 	prism.registerWidget("googleMaps", {
 
 		name : "googleMaps",
@@ -334,7 +334,6 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 			window.onGoogleMapLoaded = function () {
 
 				//	Load scripts for Google Maps, Clustering Markers Extension, and Overlapping Markers Extension
-				$.getScript(protocol + externalPaths.gapi, function (data, textStatus) {
 					$.getScript("https://www.google.com/jsapi", function(data, textStatus) {
 						$.getScript(protocol + externalPaths.markerclusterer, function (data, textStatus) {
 							$.getScript(protocol + externalPaths.infobox, function (data, textStatus) {
@@ -350,12 +349,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										/*
 										 * Widget scope Variables
 										 */
-										
-										// KML
-										var _kmlControlsShowing = false,
-											_presentKMLLayers = [],
-											_layersClickedOnce = [],
-											_layerRetries = 0;
+									
 
 										// Shape overlays
 										var overlays = [];
@@ -369,19 +363,6 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										var shapeCategory;
 										if(e.widget.metadata.panel('shape') && e.widget.metadata.panel('shape').items[0] && e.widget.metadata.panel('shape').items[0].jaql && e.widget.metadata.panel('shape').items[0].jaql.column) {
 											shapeCategory = e.widget.metadata.panel('shape').items[0].jaql.column;
-										}
-
-										//	Define function to format numbers w/ commas
-										function formatWithCommas(x) {
-											var parts = x.toString().split(".");
-											return parts[0].replace(/\B(?=(\d{3})+(?=$))/g, ",") + (parts[1] ? "." + parts[1] : "");
-										};
-
-										function createColoredShapeMarker(shape, color) {
-
-											var base = location.host.replace(":8081", "");
-											var url = "/Explorer/GetColoredShape?shape=" + shape + "&color=FF" + color;
-											return base + url;
 										}
 
 										function createMarker(radius, color) {
@@ -508,123 +489,19 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										};
 										var widgetMap = getWidgetMap(e.widget.oid);
 
-										if (!widgetMap){ // Initialize initial map controls
+										if (!widgetMap) { // Initialize initial map controls
 											widgetMap = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
 											setWidgetMap(e.widget.oid,widgetMap);
 											
 											/*
 											 * Map bound update events
 											 */
+
 											google.maps.event.addListener(widgetMap, 'bounds_changed', setMapTimer);
 
-											google.maps.event.addListener(widgetMap, 'zoom_changed', function() {
-												switch(map.getZoom()) {
-													case 6: countyLayer.setMap(map);
-														break;
-													case 5: countyLayer.setMap(null);
-														break;
-													case 8: if (_countyListener) {
-														_countyListener.remove();
-														_countyListener = null;
-													}
-														_.each(countyLabels, function (label) {
-															label.setMap(null);
-														});
-														break;
-													case 9: if (!_countyListener) {
-														_countyListener = google.maps.event.addListener(map, 'bounds_changed', function () {
-															_.each(countyLabels, function (label) {
-																if(map.getBounds().contains(label.position)) {
-																	if (label.map == null) {
-																		label.setMap(map);
-																	}
-																}
-																else {
-																	label.setMap(null);
-																}
-															});
-														});
-													}
-														break;
-												}
-											});
-											
-											/*
-											 * KML Dropdown Element
-											 */ 
-											var kmlLayers = [
-												{ id: 5, title: 'Proppant Mine Locations' },
-												{ id: 4, title: 'Transload Terminal Locations' },
-												{ id: 0, title: 'US Rail Network' },
-												{ id: 6, title: 'Eagleford Basin' }
-											];
-											function CenterControl(controlDiv, map) {
-
-												// Set CSS for the control border.
-												var control = document.createElement('div');
-												control.id = "KMLLayerButtonGroup";
-												controlDiv.appendChild(control);
-
-												// Set list
-												var ul = document.createElement('ul');
-												ul.className = "dropdown-memu";
-
-												var controlHide = document.createElement('li');
-												controlHide.id = "KMLLayerButtonGroupHide";
-												controlHide.innerHTML = "KML Layer Selection"
-
-												var iRight = document.createElement('i');
-												iRight.className = "fa fa-chevron-down";
-												controlHide.appendChild(iRight);
-
-												ul.appendChild(controlHide);
-
-												controlHide.addEventListener('click', function () {
-													if (_kmlControlsShowing) {
-														iRight.className = "fa fa-chevron-down";
-														var x = document.getElementsByClassName("kmlItem");
-														var i;
-														for (i = 0; i < x.length; i++) {
-															x[i].style.display = "none";
-														}
-														_kmlControlsShowing = false;
-													}
-													else {
-														iRight.className = "fa fa-chevron-up";
-														var x = document.getElementsByClassName("kmlItem");
-														var i;
-														for (i = 0; i < x.length; i++) {
-															x[i].style.display = "";
-														}
-														_kmlControlsShowing = true;
-													}
-												});
-
-												_.each(kmlLayers, function (layer) {
-													var li = document.createElement('li');
-													li.className = "kmlItem"
-													li.style.display = "none";
-													var a = document.createElement('a');
-													a.id = "KMLLayerCheckBox" + layer.id;
-
-													// Setup the click event listeners: simply set the map to Chicago.
-													a.addEventListener('click', function () {
-														setKMLLayer(layer.id);
-													});
-
-													a.innerHTML = layer.title;
-
-													li.appendChild(a);
-													ul.appendChild(li);
-												});
-
-												control.appendChild(ul);
-											}
-
-											var controlDiv = document.createElement('div');
-											CenterControl(controlDiv, widgetMap);
-											controlDiv.index = 1;
-											widgetMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+											$kmlService.init(widgetMap, google);
+											$countyService.init(widgetMap, google);
+										
 
 											/*
 											 * Draw Manager Control
@@ -715,12 +592,6 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 															latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
 														}
 													}
-													// else if(event.type == google.maps.drawing.OverlayType.POLYLINE) {
-													// 	overlay = {
-													// 		type: event.type,
-													// 		latLngs: google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray())
-													// 	}
-													// }
 
 													overlays.push(overlay);
 													e.widget.queryMetadata.overlays = overlays;
@@ -836,79 +707,7 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 										map = widgetMap;
 										var _drawManager = map.drawManager;
 
-										// County lines and labels
-										var _countyListener = null;
-										if (!countyLayer) {
-											countyLayer = new google.maps.FusionTablesLayer({
-												query: {
-													select: 'geometry, County Name',
-													from: '1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa'
-												},
-												suppressInfoWindows: true,
-												styles: [{
-													polygonOptions: {
-														fillColor: '#0000FF',
-														fillOpacity: 0.01,
-														strokeColor: '#FFFFFF'
-													}
-												}]
-											});
 										
-											countyLabels = [];
-											google.load('visualization', '1.0',
-												{
-													packages: ['corechart', 'table', 'geomap'],
-													callback: initializeCountyNames
-												}
-											);
-
-											function initializeCountyNames() {
-												//3215 is the number of counties in this table
-												//TOP 500 is hard limit imposed by google.
-												//Iterate results 500 at a time by using OFFSET and LIMIT
-												for (var i = 0; i < 7; i ++) {
-													var tableId = "1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa";
-													var queryStr = "SELECT 'State-County', geometry FROM " + tableId + " OFFSET " + (i * 500) + " LIMIT 500";
-													var queryText = encodeURIComponent(queryStr);
-													var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + queryText);
-													query.send(displayCountyText);
-												}
-											}
-
-											function displayCountyText(response) {
-												var numRows = response.getDataTable().getNumberOfRows();
-												for (i = 0; i < numRows; i++) {
-													var name = response.getDataTable().getValue(i, 0);
-													var polygon = response.getDataTable().getValue(i, 1);
-													var nameStr = name.toString();
-													var polygonArray = polygon.toString().replace("<Polygon><outerBoundaryIs><LinearRing><coordinates>", "").replace("</coordinates></LinearRing></outerBoundaryIs></Polygon>", "").split(" ");
-													var lat = 0;
-													var lng = 0;
-													var total = 0;
-
-													_.each(polygonArray, function (arr) {
-														var coord = arr.split(",")
-														lat += Number(coord[0]);
-														lng += Number(coord[1]);
-														total += 1;
-													});
-
-													lat = lat / total;
-													lng = lng / total;
-
-													var mapLabel = new MapLabel({
-														text: nameStr,
-														position: new google.maps.LatLng(lng, lat),
-														map: null,
-														strokeWeight: 5,
-														fontSize: 16,
-														align: 'center'
-													});
-													countyLabels.push(mapLabel);
-												};
-											}
-										}
-
 										if(e.widget.queryMetadata) {
 											//Do nothing
 										} else {
@@ -1060,13 +859,6 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 															&& overlay.latLngs == path;
 													});
 													break;
-												// case 'polyline':
-												// 	var path = google.maps.geometry.encoding.encodePath(event.overlay.getPath().getArray());
-												// 	overlays = _.reject(overlays, function(overlay) {
-												// 		return overlay.type == 'polyline'
-												// 		&& overlay.latLngs == path;
-												// 	});
-												// 	break;
 											}
 
 											e.widget.queryMetadata.overlays = overlays;
@@ -1421,42 +1213,6 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 											$legendsService.addRowsToColorLegend(colorArray);
 										}
 
-										/*//Add event listeners to each marker, to popup the info window
-										oms.addListener('click', function(marker, event) {
-										infowindow.setContent(marker.sisenseTooltip);
-										infowindow.open(map, marker);
-										});
-
-										// adjust info window style, if necessary
-										var infowindow = new InfoBox({
-										closeBoxURL : ""
-										});
-
-										//	Add hover popup for clusters
-										google.maps.event.addListener(markerCluster, 'mouseover', function (cluster) {
-										var sum = 0;
-										_.each(cluster["markers_"], function (item) {
-										sum += parseFloat(item["value"]);
-										});
-										sum = Math.round(sum);
-										//infowindow.setContent(cluster.markerClusterer_.clusterLabel + ': ' + formatWithCommas(sum));
-										//infowindow.open(map);
-										//infowindow.setPosition(cluster.getCenter());
-										});
-										
-										//	Remove hover popup for clusters
-										google.maps.event.addListener(markerCluster, 'mouseout', function (cluster) {
-										infowindow.close();
-										});
-										//	Close any open info windows when clicking on a cluster
-										google.maps.event.addListener(markerCluster, 'click', function (cluster) {
-										infowindow.close();
-										});
-										//	Define function for closing info windows on click
-										google.maps.closeInfoWindow = function() {
-										infowindow.close();
-										};*/
-
 										function setMapTimer() {
 											clearTimeout(mapupdater);
 											mapupdater = setTimeout(updateMapSettings, 500);
@@ -1479,182 +1235,13 @@ prism.run(['plugin-googleMapsWidget.services.legendsService',function($legendsSe
 											};
 
 											$('#mapRefresh').show();
-										}
-
-										/*
-										 * KML Piece
-										 */
-										function setKMLLayer(kmlId) {
-											//All US Rail Networks
-											if (kmlId === 0) {
-												//First time click
-												if (!usRailsAdded() && !hasBeenClicked(kmlId)) {
-													$('#KMLLayerCheckBox'+kmlId).css("color", "rgb(247, 149, 72)");
-													for (var i = 0; i < 4; i++) {
-														loadLayer(i);
-													}
-												}
-											}
-											else if (kmlId === 6) {
-												//First time click
-												if (!usRailsAdded() && !hasBeenClicked(kmlId)) {
-													$('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
-													for (var i = 6; i < 15; i++) {
-														loadLayer(i);
-													}
-													_layersClickedOnce.push(6)
-												}
-												//Toggle attributes if not first click
-												else {
-													$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-													_.each(_presentKMLLayers, function (loc) {
-														if (loc.kmlId > 5 && loc.kmlId < 15) {
-															loc.checked = !loc.checked;
-															loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
-														}
-													});
-												}
-											}
-											//Other networks
-											else {
-												//First click
-												if (!layerAdded(kmlId) && !hasBeenClicked(kmlId))
-												{
-													$('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
-													loadLayer(kmlId);
-													_layersClickedOnce.push(kmlId);
-												}
-												//Toggle attributes if not first click
-												else {
-													//Grab the layer, only reverse attributes if layer exists; if not, just toggle the selection in dropdown
-													var loc = _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId });
-													if (loc) {
-														toggleAttributes(loc, kmlId);
-													}
-													else {
-														toggleSelected(kmlId);
-													}
-												}
-
-											}
-										}
-
-										//Check if the layer has been loaded successfully
-										function layerAdded(kmlId) {
-											return _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId }) ? true : false;
-										}
-
-										//Check if the layer is selected in the dropdown
-										function layerIsSelected(kmlId) {
-											//If a US rail, check if 0 is selected
-											if(kmlId > 5 && kmlId < 15){
-												kmlId = 6;
-											}
-											else if (kmlId < 4){
-												kmlId = 0;
-											}
-											return $('#KMLLayerCheckBox'+kmlId).css("color") === "rgb(247, 149, 72)";
-										}
-
-										//Check that at least one layer exists, showing this has been called before
-										function usRailsAdded() {
-											return _.find(_presentKMLLayers, function (layer) {
-												return layer.kmlId === 0 || layer.kmlId === 1 || layer.kmlId === 2 || layer.kmlId === 3
-											}) ? true : false;
-										}
-
-										//Check if the layer has been selected at least one time
-										function hasBeenClicked(kmlId) {
-											return _layersClickedOnce.indexOf(kmlId) > -1;
-										}
-
-										//Reverse the current attributes of the layer
-										function toggleAttributes(loc, kmlId) {
-											$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-											loc.checked = !loc.checked;
-											loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
-										}
-
-										//Reverse the visibility of the check mark on the dropdown, either 'selecting' or 'unselecting' it.
-										function toggleSelected(kmlId) {
-											$('#KMLLayerCheckBox' + kmlId).css("color", (layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-										}
-
-										function clearKmlLayers() {
-											$('[id^="KMLLayerCheckBox"]').each(function (item) {
-												$(this).css("visibility", "hidden");
-											});
-											_.each(_presentKMLLayers, function (layer) {
-												layer.kmlLayer.setMap(null);
-												layer.checked = false;
-											});
-										}
-
-										function loadLayer(id) {
-											_isProductionExport = 1;
-											return $.ajax({
-												url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
-												//data: { "id": id },
-												method: "POST",
-												dataType: "JSON"
-											}).done(function (data) {
-												if (data.success) {
-													//var longUrl= "http://" + location.host + "/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
-													// Use for the KML in Sisense
-													var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
-													var request = gapi.client.urlshortener.url.insert({
-														'resource': {
-															'longUrl': longUrl
-														}
-													});
-													request.execute(function(response)
-													{
-														if (response && response.id) {
-															var kmlUrl = response.id;
-															var kmlLayer = new google.maps.KmlLayer({
-																url: kmlUrl,
-																map: map,
-																preserveViewport: true
-															});
-
-															//Error handling
-															//If fails, just try again, up to 10 times
-															setTimeout(function () {
-																if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {
-																	var item = {
-																		kmlLayer: kmlLayer,
-																		kmlId: id,
-																		checked: true
-																	};
-																	if (!layerIsSelected(id)) {
-																		item.kmlLayer.setMap(null);
-																		item.checked = false;
-																	}
-																	_presentKMLLayers.push(item);
-																}
-																else {
-																	if (_layerRetries < 10) {
-																		console.warn('KML layer not added [' + id + ']. Trying again.');
-																		loadLayer(id);
-																		_layerRetries += 1;
-																	}
-																}
-															}, 30000);
-														}
-														else {
-															console.warn('Google API failed.');
-														}
-													});
-												}
-											});
-										}
+										}										
 										
 									});
 								});
 							});
 						});
 					});
-				});
 			}
 			if(typeof google != "undefined"){
 				// first call to onGoogleMapLoaded is done when google maps loaded once loaded, render will call onGoogleMapLoaded - its done to avoid multiple invocation of onGoogleMapLoaded
