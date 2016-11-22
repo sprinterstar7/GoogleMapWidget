@@ -12,11 +12,24 @@ mod.service('kmlService', [
             google,
             map
 
+        //Update all major basin layer ids except Eagleford
         var kmlLayers = [
             { id: 5, title: 'Proppant Mine Locations' },
             { id: 4, title: 'Transload Terminal Locations' },
-            { id: 0, title: 'US Rail Network' },
-            { id: 6, title: 'Eagleford Basin' }
+            { id: 0, title: 'US Rail Network' },  
+            { id: 7, title: 'Barnett Basin' },    
+            { id: 15, title: 'DS Basin' },
+            { id: 9, title: 'Eaglebine Basin' },
+            { id: 6, title: 'Eagleford Basin' },
+            { id: 10, title: 'Fayetteville Basin' },
+            { id: 11, title: 'Haynesville Basin' },
+            { id: 12, title: 'Marcellus Basin' },
+            { id: 13, title: 'Permian Basin' },
+            { id: 14, title: 'PRB Basin' },
+            { id: 15, title: 'San Jan Basin' },
+            { id: 16, title: 'TMS Play Basin' },
+            { id: 17, title: 'Utica Basin' },      
+            { id: 18, title: 'Woodford Basin' }          
         ];
 
         var serviceFunctions =  { 

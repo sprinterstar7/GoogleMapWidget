@@ -85,6 +85,15 @@ public class KMLHandler : IHttpHandler
                 case 14:
                     fileName = "RSEG Eagleford Combined 4.kmz";
                     break;
+                case 15:
+                    fileName = "DJ Basin Combined 1.kmz";
+                    break;
+                case 16:
+                    fileName = "DJ Basin Combined 2.kmz";
+                    break;
+                case 17:
+                    fileName = "Marcellus.kmz";
+                    break;
                 default:
                     fileName = "Midwest Rail.kml";
                     break;

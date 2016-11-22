@@ -132,14 +132,11 @@ mod.service('legendsService', [
             },
 						
             addRowsToShapeBy:  function(arr) {
-                var shapeColumn = _.find(shapesMetadata, function(category){
-                    return category.column == shapeCategory;
-                });
 
                 _.each(arr, function(row){
                     var shape = "circle";
-                    if(shapeColumn && shapeColumn.items) {
-                        var item = _.find(shapeColumn.items, function(item) {
+                    if(shapesMetadata && shapesMetadata.items) {
+                        var item = _.find(shapesMetadata.items, function(item) {
                             return item.value == row;
                         });
                         if(item) {
@@ -178,31 +175,20 @@ mod.service('legendsService', [
                     }
                 });
                 $('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '/plugins/googleMapsWidget/resources/shapes/'+shape+'.png');
-                var shapeMetadataColumn = _.find(shapesMetadata, function(category){
-                    return category.column == shapeCategory;
-                });
-                if(shapeMetadataColumn) {
-                    var item = _.find(shapeMetadataColumn.items, function(item){
+
+                if(shapesMetadata) {
+                    var item = _.find(shapesMetadata.items, function(item){
                         return item.value == data;
                     });
-                    if(item && item.shape) {
+                    if(item && item.shape && item.shape !== shape) {
                         item.shape = shape;
                     }
                     else {
-                        shapeMetadataColumn.items.push({
+                        shapesMetadata.items.push({
                             value : data,
                             shape: shape
                         })
                     }
-                }
-                else {
-                    shapesMetadata.push({
-                        column : shapeCategory,
-                        items : [{
-                            value : data,
-                            shape: shape
-                        }]
-                    })
                 }
                 e.widget.queryMetadata.savedShapes = shapesMetadata;
                 e.widget.changesMade();
