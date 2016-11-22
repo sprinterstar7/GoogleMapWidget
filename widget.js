@@ -758,9 +758,9 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 											if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
 												var item = _.find(savedShapesCategory.items, function(item){
-													return item.value == data;
+													return item.value == qresult[i][4].data;
 												});
-												if(item && item.shape) {
+												if(item) {
 													item.shape = shape;
 												}
 												else {
@@ -789,6 +789,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
 										e.widget.changesMade();
+
+										console.log(shapesMetadata);
 
 										if ($('#mapSidebar').length < 1) 
 											$legendsService.init(colorCategory, shapeCategory, shapesMetadata, map, e, markers);
