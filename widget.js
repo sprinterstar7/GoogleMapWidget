@@ -249,21 +249,19 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 								switch(widget.mapSettings.zoomLevel)
 								{
-									case 6:
-									case 7:
 									case 8:
 									case 9:
 									case 10:
 									case 11:
-									case 12: column = "1";
-										break;
+									case 12: 
 									case 13:
-									case 14:
-									case 15:
-									case 16: column = "2";
+									case 14: column = "1";
 										break;
+									case 15:
+									case 16: 
 									case 17:
-									case 18:
+									case 18: column = "2";
+										break;
 									case 19:
 									case 20: column = "3";
 										break;
@@ -570,8 +568,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 																"datatype": "numeric",
 																"title": "Longitude",
 																"filter": {
-																	"from": SW.lng(),
-																	"to": NE.lng()
+																	"from":(SW.lng() > NE.lng()) ? -180 : SW.lng(),
+																	"to": (SW.lng() > NE.lng()) ? 180 : NE.lng(),
 																}
 															}
 														};
@@ -831,11 +829,11 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
                                             center = map.getCenter();
 
                                             e.widget.mapSettings = {
-                                                "zoomLevel": zoom,
+                                                "zoomLevel": (SW.lng() > NE.lng()) ? 5 : zoom,
                                                 "neLat": NE.lat(),
-                                                "neLong": NE.lng(),
+                                                "neLong": (SW.lng() > NE.lng()) ? 180 : NE.lng(),
                                                 "swLat": SW.lat(),
-                                                "swLong": SW.lng(),
+                                                "swLong": (SW.lng() > NE.lng()) ? -180 : SW.lng(),
                                                 "center": { lat: center.lat(), lng: center.lng() }
                                             };
 
