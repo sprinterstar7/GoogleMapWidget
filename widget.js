@@ -274,15 +274,23 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 							}
 							catch(err) { column = "0";};
 
-						}
-						else column = "";
+							query.metadata[0].jaql.column = "GeocodeLt" + column;
+							query.metadata[0].jaql.title = "GeocodeLt" + column;
+							query.metadata[0].jaql.dim = "[Well.GeocodeLt" + column + "]";
+							query.metadata[1].jaql.column = "GeocodeLg" + column;
+							query.metadata[1].jaql.title = "GeocodeLg" + column;
+							query.metadata[1].jaql.dim = "[Well.GeocodeLg" + column + "]";
 
-						query.metadata[0].jaql.column = "Latitude" + column;
-						query.metadata[0].jaql.title = "Latitude" + column;
-						query.metadata[0].jaql.dim = "[Well.Latitude" + column + "]";
-						query.metadata[1].jaql.column = "Longitude" + column;
-						query.metadata[1].jaql.title = "Longitude" + column;
-						query.metadata[1].jaql.dim = "[Well.Longitude" + column + "]";
+						}
+						else { 						
+							query.metadata[0].jaql.column = "Latitude";
+							query.metadata[0].jaql.title = "Latitude";
+							query.metadata[0].jaql.dim = "[Well.Latitude]";
+							query.metadata[1].jaql.column = "Longitude";
+							query.metadata[1].jaql.title = "Longitude" ;
+							query.metadata[1].jaql.dim = "[Well.Longitude]";
+
+						}
 
 					},
 					dataType: 'json',
@@ -805,32 +813,33 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											$legendsService.addRowsToColorLegend(colorArray);
 										}
 
+
 										function setMapTimer() {
 											clearTimeout(mapupdater);
 											mapupdater = setTimeout(updateMapSettings, 500);
 										}
 
 										function updateMapSettings() {
-											var bounds = map.getBounds(),
-											NE = bounds.getNorthEast(),
-											SW = bounds.getSouthWest(),
-											zoom = map.getZoom(),
-											center = map.getCenter();
+                                            var bounds = map.getBounds(),
+                                            NE = bounds.getNorthEast(),
+                                            SW = bounds.getSouthWest(),
+                                            zoom = map.getZoom(),
+                                            center = map.getCenter();
 
-											e.widget.mapSettings = {
-												"zoomLevel": zoom,
-												"neLat": NE.lat(),
-												"neLong": NE.lng(),
-												"swLat": SW.lat(),
-												"swLong": SW.lng(),
-												"center": { lat: center.lat(), lng: center.lng() }
-											};
+                                            e.widget.mapSettings = {
+                                                "zoomLevel": zoom,
+                                                "neLat": NE.lat(),
+                                                "neLong": NE.lng(),
+                                                "swLat": SW.lat(),
+                                                "swLong": SW.lng(),
+                                                "center": { lat: center.lat(), lng: center.lng() }
+                                            };
 
-											if (boundsChangedOnce)
-												$('#mapRefresh').show();
-											else
-												boundsChangedOnce = true;
-										}										
+                                            if (boundsChangedOnce)
+                                                $('#mapRefresh').show();
+                                            else
+                                                boundsChangedOnce = true;
+                                        }								
 										
 									});
 								});
