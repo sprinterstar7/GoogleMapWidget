@@ -788,12 +788,16 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 														shape: "circle"
 													}]
 												}
+												shapesMetadata = [];
 												shapesMetadata.push(cat);
+												// shapesMetadata = _.filter(shapesMetadata, function(categories){
+												// 	return categories.column == cat.column;
+												// });
 												savedShapesCategory = cat;
 											}
 										}
 										//END for
-
+										console.log(shapesMetadata);
 										map.markers = markers;
 
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends

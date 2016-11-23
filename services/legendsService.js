@@ -105,13 +105,12 @@ mod.service('legendsService', [
             },
 
             
-            openShapeSelection: function(row, selector) {
+            openShapeSelection: function(row, selector, y) {
                 $('#shapeSelectionWindow').remove();
                 if(open != row) {
                     var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
                     $(map.getDiv()).append($(htmlString));
-                    var top = 100 + (shapeArray.indexOf(row) * 35);
-                    $('#shapeSelectionWindow').css("top", "" + top +  "px");
+                    $('#shapeSelectionWindow').css("top", "" + (y-125) +  "px");
                     open = row;
                     _.each(availableShapes, function(shape) {
                         var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
@@ -157,8 +156,8 @@ mod.service('legendsService', [
                         +"<td class='shapeLegendDescription'><span>"+row+"</span></td>"
                         +"<td class='shapeLegendImg'><img src='/plugins/googleMapsWidget/resources/shapes/"+shape+".png'/></td>"
                         +"</tr>"));
-                    $('#shapeRow'+rowId+' td.shapeLegendImg img').click(function() {
-                        serviceFunctions.openShapeSelection(row, rowId);
+                    $('#shapeRow'+rowId+' td.shapeLegendImg img').click(function(e) {
+                        serviceFunctions.openShapeSelection(row, rowId, e.pageY);
                     });
                 });
 
