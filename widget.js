@@ -569,20 +569,25 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 															"dim": "[Well.Longitude]",
 															"datatype": "numeric",
 															"title": "Longitude",
-															"filter": ( SW.lng() < NE.lng() ) ? {
-																	"from": SW.lng(),
-																	"to": NE.lng()
-																} : {
-																	"or": [
-																		{
-																			"from":  SW.lng(),
-																			"to": 180
-																		},
-																		{
-																			"from": -180,
-																			"to": NE.lng()
-																	}]
-																}
+															"filter": 
+																( SW.lng() < NE.lng() ) 
+																? 
+																	{
+																		"from": SW.lng(),
+																		"to": NE.lng()
+																	} 
+																: 
+																	{
+																		"or": [
+																			{
+																				"from":  SW.lng(),
+																				"to": 180
+																			},
+																			{
+																				"from": -180,
+																				"to": NE.lng()
+																		}]
+																	}
 															}
 														};
 
