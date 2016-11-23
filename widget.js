@@ -758,9 +758,9 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 											if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
 												var item = _.find(savedShapesCategory.items, function(item){
-													return item.value == data;
+													return item.value == qresult[i][4].data;
 												});
-												if(item && item.shape) {
+												if(item) {
 													item.shape = shape;
 												}
 												else {
