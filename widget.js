@@ -561,18 +561,33 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 																}
 															}
 														};
-
+														
 														var long = {
 															"jaql": {
-																"table": "Well",
-																"column": "Longitude",
-																"dim": "[Well.Longitude]",
-																"datatype": "numeric",
-																"title": "Longitude",
-																"filter": {
-																	"from": SW.lng(),
-																	"to": NE.lng()
-																}
+															"table": "Well",
+															"column": "Longitude",
+															"dim": "[Well.Longitude]",
+															"datatype": "numeric",
+															"title": "Longitude",
+															"filter": 
+																( SW.lng() < NE.lng() ) 
+																? 
+																	{
+																		"from": SW.lng(),
+																		"to": NE.lng()
+																	} 
+																: 
+																	{
+																		"or": [
+																			{
+																				"from":  SW.lng(),
+																				"to": 180
+																			},
+																			{
+																				"from": -180,
+																				"to": NE.lng()
+																		}]
+																	}
 															}
 														};
 
@@ -833,9 +848,9 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
                                             e.widget.mapSettings = {
                                                 "zoomLevel": zoom,
                                                 "neLat": NE.lat(),
-                                                "neLong": NE.lng(),
+                                                "neLong":  NE.lng(),
                                                 "swLat": SW.lat(),
-                                                "swLong": SW.lng(),
+                                                "swLong":  SW.lng(),
                                                 "center": { lat: center.lat(), lng: center.lng() }
                                             };
 
