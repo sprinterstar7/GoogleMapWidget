@@ -309,6 +309,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 		},
 		render : function (s, e) {
 			var map;
+			var boundsChangedOnce = false;
 
 			var googleMapFilters = {
 				SHAPES: 0,
@@ -825,7 +826,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												"center": { lat: center.lat(), lng: center.lng() }
 											};
 
-											$('#mapRefresh').show();
+											if (boundsChangedOnce)
+												$('#mapRefresh').show();
+											else
+												boundsChangedOnce = true;
 										}										
 										
 									});
