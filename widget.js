@@ -258,12 +258,12 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 									case 12: column = "1";
 										break;
 									case 13:
-									case 14: 
+									case 14:
 									case 15:
 									case 16: column = "2";
 										break;
 									case 17:
-									case 18: 
+									case 18:
 									case 19:
 									case 20: column = "3";
 										break;
