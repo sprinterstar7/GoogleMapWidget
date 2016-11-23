@@ -364,6 +364,16 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										// Shape overlays
 										var overlays = [];
 
+										if(e.widget.queryMetadata) {
+											//Do nothing
+										} else {
+											e.widget.queryMetadata = { };
+											e.widget.changesMade();
+										}
+
+										if(e.widget.queryMetadata.overlays) {
+											overlays = e.widget.queryMetadata.overlays;
+										};
 
 										var colorCategory;
 										if(e.widget.metadata.panel('color') && e.widget.metadata.panel('color').items[0] && e.widget.metadata.panel('color').items[0].jaql && e.widget.metadata.panel('color').items[0].jaql.column) {
@@ -610,23 +620,14 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													$('#mapRefresh').hide();
 												}
 											});
+
+											$drawingService.drawShapesFromMetaData(overlays);
+
 										}
 
 										map = widgetMap;
 
-										
-										if(e.widget.queryMetadata) {
-											//Do nothing
-										} else {
-											e.widget.queryMetadata = { };
-											e.widget.changesMade();
-										}
-
-										if(e.widget.queryMetadata.overlays) {
-											overlays = e.widget.queryMetadata.overlays;
-										};
-
-										$drawingService.drawShapesFromMetaData(overlays);
+									
 
 										//	Create an object to handle multiple markers at the same coordinates
 										var omsOptions = {
