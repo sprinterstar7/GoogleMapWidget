@@ -562,45 +562,29 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 															}
 														};
 														
-														var long;
-														
-														if(SW.lng() > NE.lng()){
-															long = {
-																"jaql": {
-																	"table": "Well",
-																	"column": "Longitude",
-																	"dim": "[Well.Longitude]",
-																	"datatype": "numeric",
-																	"title": "Longitude",
-																	"filter": {
-																		"or": [
-																			{
-																				"from":  SW.lng(),
-																				"to": 180
-																			},
-																			{
-																				"from": -180,
-																				"to": NE.lng()
-																			}]
-																	}
+														var long = {
+															"jaql": {
+															"table": "Well",
+															"column": "Longitude",
+															"dim": "[Well.Longitude]",
+															"datatype": "numeric",
+															"title": "Longitude",
+															"filter": ( SW.lng() < NE.lng() ) ? {
+																	"from": SW.lng(),
+																	"to": NE.lng()
+																} : {
+																	"or": [
+																		{
+																			"from":  SW.lng(),
+																			"to": 180
+																		},
+																		{
+																			"from": -180,
+																			"to": NE.lng()
+																	}]
 																}
-															};
-														} 
-														else { 
-															long = {
-																"jaql": {
-																	"table": "Well",
-																	"column": "Longitude",
-																	"dim": "[Well.Longitude]",
-																	"datatype": "numeric",
-																	"title": "Longitude",
-																	"filter": {
-																		"from": SW.lng(),
-																		"to":  NE.lng(),
-																	}
-																}
-															};
-														}
+															}
+														};
 
 														var options = {
 															save: true,
