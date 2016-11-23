@@ -74,6 +74,11 @@ mod.service('countyService', [
                             break;
                     }
                 });
+
+                if(map.getZoom() >= 6){
+                    countyLayer.setMap(map);
+                }
+                
             },
 
            initializeCountyNames: function() {
@@ -87,9 +92,27 @@ mod.service('countyService', [
                     var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + queryText);
                     query.send(serviceFunctions.displayCountyText);
                 }
+
+                if(map.getZoom() >= 9) { 
+                    if (!_countyListener) {
+                        _countyListener = google.maps.event.addListener(map, 'bounds_changed', function () {
+                            _.each(countyLabels, function (label) {
+                                if(map.getBounds().contains(label.position)) {
+                                    if (label.map == null) {
+                                        label.setMap(map);
+                                    }
+                                }
+                                else {
+                                    label.setMap(null);
+                                }
+                            });
+                        });
+                    }
+                }
             },
 
             displayCountyText: function(response) {
+                var currentZoom = map.getZoom();
                 var numRows = response.getDataTable().getNumberOfRows();
                 for (i = 0; i < numRows; i++) {
                     var name = response.getDataTable().getValue(i, 0);
@@ -119,7 +142,10 @@ mod.service('countyService', [
                         align: 'center'
                     });
                     countyLabels.push(mapLabel);
-                };
+                    if(currentZoom >= 9 && map.getBounds().contains(mapLabel.position)){
+                        mapLabel.setMap(map);
+                    }
+                }
             }
         
         }
