@@ -666,7 +666,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 										map.markers = map.markers || [];
 										google.maps.event.trigger(map, 'resize');
-										
+
 										var i = 0,
 											dataSize = qresult.length,
 											j,
