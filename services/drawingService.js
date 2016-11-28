@@ -311,6 +311,10 @@ mod.service('drawingService', [
                 var latItem = serviceFunctions.getLatLngFieldFilter(bounds.f.f,bounds.f.b,"Latitude"),
                     lngItem = serviceFunctions.getLatLngFieldFilter( bounds.b.b,bounds.b.f,"Longitude");
 
+                    console.log(lngItem);
+
+                console.log(bounds.b.b,bounds.b.f);
+
                 wellField.jaql.filter.or.push({
                     "and":[latItem,lngItem]
                 });
@@ -421,7 +425,29 @@ mod.service('drawingService', [
                     "datatype": "numeric",
                     "title": fieldName,
                     "collapsed": true,
-                    "filter": {
+                    "filter": 
+                        from > to 
+                        ? 
+                        {
+                        "or": [
+                            {
+                                "and":[{
+                                    "fromNotEqual": from
+                                }, {
+                                    "toNotEqual": 180
+                                }
+                            ]},
+                                {
+                                "and":[{
+                                    "fromNotEqual": -180
+                                }, {
+                                    "toNotEqual": to
+                                }
+                            ]},
+                        ]                     
+                    } 
+                    : 
+                    {
                         "and":[{
                             "fromNotEqual": from
                         }, {
