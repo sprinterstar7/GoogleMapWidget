@@ -283,7 +283,20 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 								query.metadata[1].jaql.column = "GeocodeLg" + column;
 								query.metadata[1].jaql.title = "GeocodeLg" + column;
 								query.metadata[1].jaql.dim = "[Well.GeocodeLg" + column + "]";
-
+								query.metadata.push({ 
+									"jaql": {
+										"formula": "COUNT(Id)",
+										"context": {
+										"[Id]": {
+											"table": "Well",
+											"column": "Well Unique Id",
+											"dim": "[Well.Well Unique Id]",
+											"datatype": "numeric"
+										}
+										},
+										"title": "Id Count"
+									}
+								});
 							}
 							else { 						
 								query.metadata[0].jaql.column = "Latitude";
@@ -294,7 +307,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 								query.metadata[1].jaql.dim = "[Well.Longitude]";
 
 							}
-
 						},
 						dataType: 'json',
 						async: false
@@ -778,6 +790,27 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													}
 												}
 
+												var isCluster = (qresult[i][3] && !qresult[i][3].color && qresult[i][3].data);
+												var url;
+												if(isCluster) { 
+													var count = qresult[i][3].data;
+													if(count >= 1 && count < 10) { 
+														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m1.png";
+													}
+													else if(count >= 10 && count < 100) { 
+														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m2.png";
+													}
+													else if(count >= 100 && count < 1000) { 
+														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m3.png";
+													}	
+													else if(count >= 1000 && count < 10000) { 
+														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m4.png";
+													}
+													else { 
+														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m5.png";
+													}
+												}
+
 												// Create the marker
 												var marker = new google.maps.Marker({
 													map : map,
@@ -785,13 +818,19 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													raiseOnDrag : false,
 													visible : true,
 													draggable : false,
-													icon: (shapeCategory) ? {
+													label: (isCluster) ? qresult[i][3].text : null,
+													icon: 
+													(isCluster) ? { 
+														url : url,
+														anchor: new google.maps.Point(10, 10)
+													} : (shapeCategory) ? {
 														url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
 														anchor: new google.maps.Point(10, 10)
 													} : colors[pinColor],
 													title : qresult[i][measureIndex]["text"], // the formatted value of each marker
 													value : qresult[i][measureIndex]["data"] // the value of each marker
 												});
+ 							
 												
 												//	Add data to the marker
 												marker.sisenseTooltip = markerText;
@@ -834,13 +873,14 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											}
 											//END for
 											map.markers = markers;
+
 											$staticOverlayService.removeOverlay();
+
+											
 										}
 										else { 
 											s.fromReadjust = false;
 										}
-
-										
 
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
