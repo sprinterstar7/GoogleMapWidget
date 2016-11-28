@@ -311,10 +311,6 @@ mod.service('drawingService', [
                 var latItem = serviceFunctions.getLatLngFieldFilter(bounds.f.f,bounds.f.b,"Latitude"),
                     lngItem = serviceFunctions.getLatLngFieldFilter( bounds.b.b,bounds.b.f,"Longitude");
 
-                    console.log(lngItem);
-
-                console.log(bounds.b.b,bounds.b.f);
-
                 wellField.jaql.filter.or.push({
                     "and":[latItem,lngItem]
                 });
