@@ -7,6 +7,7 @@
 		"services/legendsService.js",
 		"services/kmlService.js",
 		"services/helperService.js",
+		"services/staticOverlayService.js",
 	  "general.js",
 		"widget.js"
 	],

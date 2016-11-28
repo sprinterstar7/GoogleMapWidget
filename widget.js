@@ -3,7 +3,8 @@ var mapupdater;
 
 prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsWidget.services.legendsService', 
 	'plugin-googleMapsWidget.services.kmlService', 'plugin-googleMapsWidget.services.countyService', 
-	'plugin-googleMapsWidget.services.drawingService', function($helperService, $legendsService, $kmlService, $countyService, $drawingService) {
+	'plugin-googleMapsWidget.services.drawingService', 'plugin-googleMapsWidget.services.staticOverlayService', 
+	function($helperService, $legendsService, $kmlService, $countyService, $drawingService, $staticOverlayService) {
 	prism.registerWidget("googleMaps", {
 
 		name : "googleMaps",
@@ -363,7 +364,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										/*
 										 * Widget scope Variables
 										 */
-									
 
 										// Shape overlays
 										var overlays = [];
@@ -521,6 +521,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											 * Map bound update events
 											 */
 
+											$staticOverlayService.init(widgetMap, google);
+
 											google.maps.event.addListener(widgetMap, 'bounds_changed', setMapTimer);
 
 											$kmlService.init(widgetMap, google);
@@ -546,6 +548,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													});
 
 													$('#mapRefresh').on('click', function () {
+														$staticOverlayService.addOverlay();
 														$('#mapRefresh').hide();
 
 														var mapBounds = map.getBounds();
@@ -706,6 +709,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 										map.markers = map.markers || [];
 										google.maps.event.trigger(map, 'resize');
+										
 
 										var i = 0,
 											dataSize = qresult.length,
@@ -830,11 +834,13 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											}
 											//END for
 											map.markers = markers;
+											$staticOverlayService.removeOverlay();
 										}
 										else { 
 											s.fromReadjust = false;
 										}
 
+										
 
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
@@ -897,6 +903,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 		readjust : function(s, e){
 			s.fromReadjust = true;
+			$staticOverlayService.readjustOverlay();
 		}
 	});
 }]);
