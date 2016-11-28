@@ -157,147 +157,151 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 			// builds a jaql query from the given widget
 			buildQuery : function (widget) {
-				
-				var query = {
-					datasource : widget.datasource,
-					metadata : []
-				};
 
-				query.count = 25000;//0;
-				query.offset = 0;
-
-				var countQuery = {
-					datasource : widget.datasource,
-					metadata : []
-				};
-				countQuery.metadata.push({
-					"jaql": {
-						"formula":"COUNT(Id)",
-						"context": {
-							"[Id]" : {
-								"table": "Well",
-								"column": "Well Unique Id",
-								"dim": "[Well.Well Unique Id]",
-								"datatype": "numeric"
-							}
-						},
-
-						"title": "Id Count"
-					}
-				});
-
-				// pushing items
-				widget.metadata.panel("latlng").items.forEach(function (item) {
-
-					query.metadata.push(item);
-				});
-
-				// pushing data
-				query.metadata.push(widget.metadata.panel("value").items[0]);
-
-				// pushing color
-				var colorPanel = widget.metadata.panel("color");
-				if (colorPanel && colorPanel.items.length > 0) {
-					query.metadata.push(colorPanel.items[0])
+				if(widget.fromReadjust) { 
+					return widget.rawQueryResult;
 				}
+				else { 
+					var query = {
+						datasource : widget.datasource,
+						metadata : []
+					};
 
-				// pushing shape
-				var shapePanel = widget.metadata.panel("shape");
-				if (shapePanel && shapePanel.items.length > 0) {
-					query.metadata.push(shapePanel.items[0])
-				}
+					query.count = 25000;//0;
+					query.offset = 0;
 
-				// pushing details
-				var detailsPanel = widget.metadata.panel("details");
-				if(detailsPanel){
-					detailsPanel.items.forEach(function (item) {
+					var countQuery = {
+						datasource : widget.datasource,
+						metadata : []
+					};
+					countQuery.metadata.push({
+						"jaql": {
+							"formula":"COUNT(Id)",
+							"context": {
+								"[Id]" : {
+									"table": "Well",
+									"column": "Well Unique Id",
+									"dim": "[Well.Well Unique Id]",
+									"datatype": "numeric"
+								}
+							},
+
+							"title": "Id Count"
+						}
+					});
+
+					// pushing items
+					widget.metadata.panel("latlng").items.forEach(function (item) {
+
 						query.metadata.push(item);
 					});
-				}
 
-				// filters
-				widget.metadata.panel('filters').items.forEach(function (item) {
+					// pushing data
+					query.metadata.push(widget.metadata.panel("value").items[0]);
 
-					item = $$.object.clone(item, true);
-					item.panel = "scope";
+					// pushing color
+					var colorPanel = widget.metadata.panel("color");
+					if (colorPanel && colorPanel.items.length > 0) {
+						query.metadata.push(colorPanel.items[0])
+					}
 
-					query.metadata.push(item);
-					countQuery.metadata.push({"panel": "scope", "jaql": item.jaql});
-				});
+					// pushing shape
+					var shapePanel = widget.metadata.panel("shape");
+					if (shapePanel && shapePanel.items.length > 0) {
+						query.metadata.push(shapePanel.items[0])
+					}
 
-				// Dashboard filters
-				prism.activeDashboard.filters.flatten().forEach(function (object) {
-					object.panel = "scope";
-					countQuery.metadata.push(object);
-				});
+					// pushing details
+					var detailsPanel = widget.metadata.panel("details");
+					if(detailsPanel){
+						detailsPanel.items.forEach(function (item) {
+							query.metadata.push(item);
+						});
+					}
 
-				$.ajax({
-					type: 'POST',
-					url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
-					data: JSON.stringify(countQuery),
-					success: function(data) {
-						var result = data.values[0];
-						var count = (result.length === undefined) ? result.data : result[0].data;
-						var column;
-						if (count > query.count) {
-							try {
-								if (colorPanel && colorPanel.items.length > 0) query.metadata.splice(3,1);
-								if (shapePanel && shapePanel.items.length > 0) query.metadata.splice(3,1);
-								if(detailsPanel){
-									query.metadata.splice(3, detailsPanel.items.length);
+					// filters
+					widget.metadata.panel('filters').items.forEach(function (item) {
+
+						item = $$.object.clone(item, true);
+						item.panel = "scope";
+
+						query.metadata.push(item);
+						countQuery.metadata.push({"panel": "scope", "jaql": item.jaql});
+					});
+
+					// Dashboard filters
+					prism.activeDashboard.filters.flatten().forEach(function (object) {
+						object.panel = "scope";
+						countQuery.metadata.push(object);
+					});
+
+					$.ajax({
+						type: 'POST',
+						url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
+						data: JSON.stringify(countQuery),
+						success: function(data) {
+							var result = data.values[0];
+							var count = (result.length === undefined) ? result.data : result[0].data;
+							var column;
+							if (count > query.count) {
+								try {
+									if (colorPanel && colorPanel.items.length > 0) query.metadata.splice(3,1);
+									if (shapePanel && shapePanel.items.length > 0) query.metadata.splice(3,1);
+									if(detailsPanel){
+										query.metadata.splice(3, detailsPanel.items.length);
+									}
+
+									switch(widget.mapSettings.zoomLevel)
+									{
+										case 8:
+										case 9:
+										case 10:
+										case 11:
+										case 12: 
+										case 13:
+										case 14: column = "1";
+											break;
+										case 15:
+										case 16: 
+										case 17:
+										case 18: column = "2";
+											break;
+										case 19:
+										case 20: column = "3";
+											break;
+										default: // Map's first load
+											column = "0";
+											break;
+									}
 								}
+								catch(err) { column = "0";};
 
-								switch(widget.mapSettings.zoomLevel)
-								{
-									case 6:
-									case 7:
-									case 8:
-									case 9:
-									case 10:
-									case 11:
-									case 12: column = "1";
-										break;
-									case 13:
-									case 14:
-									case 15:
-									case 16: column = "2";
-										break;
-									case 17:
-									case 18:
-									case 19:
-									case 20: column = "3";
-										break;
-									default: // Map's first load
-										column = "0";
-										break;
-								}
+								query.metadata[0].jaql.column = "GeocodeLt" + column;
+								query.metadata[0].jaql.title = "GeocodeLt" + column;
+								query.metadata[0].jaql.dim = "[Well.GeocodeLt" + column + "]";
+								query.metadata[1].jaql.column = "GeocodeLg" + column;
+								query.metadata[1].jaql.title = "GeocodeLg" + column;
+								query.metadata[1].jaql.dim = "[Well.GeocodeLg" + column + "]";
+
 							}
-							catch(err) { column = "0";};
+							else { 						
+								query.metadata[0].jaql.column = "Latitude";
+								query.metadata[0].jaql.title = "Latitude";
+								query.metadata[0].jaql.dim = "[Well.Latitude]";
+								query.metadata[1].jaql.column = "Longitude";
+								query.metadata[1].jaql.title = "Longitude" ;
+								query.metadata[1].jaql.dim = "[Well.Longitude]";
 
-							query.metadata[0].jaql.column = "GeocodeLt" + column;
-							query.metadata[0].jaql.title = "GeocodeLt" + column;
-							query.metadata[0].jaql.dim = "[Well.GeocodeLt" + column + "]";
-							query.metadata[1].jaql.column = "GeocodeLg" + column;
-							query.metadata[1].jaql.title = "GeocodeLg" + column;
-							query.metadata[1].jaql.dim = "[Well.GeocodeLg" + column + "]";
+							}
 
-						}
-						else { 						
-							query.metadata[0].jaql.column = "Latitude";
-							query.metadata[0].jaql.title = "Latitude";
-							query.metadata[0].jaql.dim = "[Well.Latitude]";
-							query.metadata[1].jaql.column = "Longitude";
-							query.metadata[1].jaql.title = "Longitude" ;
-							query.metadata[1].jaql.dim = "[Well.Longitude]";
+						},
+						dataType: 'json',
+						async: false
+					});
 
-						}
-
-					},
-					dataType: 'json',
-					async: false
-				});
-
-				return query;
+					return query;
+				}			
+			
 			},
 
 			// prepares the widget-specific query result from the given result data-table
@@ -562,22 +566,17 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 															}
 														};
 														
-														var long = {
-															"jaql": {
-															"table": "Well",
-															"column": "Longitude",
-															"dim": "[Well.Longitude]",
-															"datatype": "numeric",
-															"title": "Longitude",
-															"filter": 
-																( SW.lng() < NE.lng() ) 
-																? 
-																	{
-																		"from": SW.lng(),
-																		"to": NE.lng()
-																	} 
-																: 
-																	{
+														var long;
+														
+														if(SW.lng() > NE.lng()){
+															long = {
+																"jaql": {
+																	"table": "Well",
+																	"column": "Longitude",
+																	"dim": "[Well.Longitude]",
+																	"datatype": "numeric",
+																	"title": "Longitude",
+																	"filter": {
 																		"or": [
 																			{
 																				"from":  SW.lng(),
@@ -586,10 +585,26 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 																			{
 																				"from": -180,
 																				"to": NE.lng()
-																		}]
+																			}]
 																	}
-															}
-														};
+																}
+															};
+														} 
+														else { 
+															long = {
+																"jaql": {
+																	"table": "Well",
+																	"column": "Longitude",
+																	"dim": "[Well.Longitude]",
+																	"datatype": "numeric",
+																	"title": "Longitude",
+																	"filter": {
+																		"from": SW.lng(),
+																		"to":  NE.lng(),
+																	}
+																}
+															};
+														}
 
 														var options = {
 															save: true,
@@ -711,109 +726,115 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											})
 										}
 										
-										map.clearMarkers();
+										if(!s.fromReadjust) { 
+											map.clearMarkers();
 
-										//	Create each marker for the map
-										for (; i < dataSize; i++) {
+											//	Create each marker for the map
+											for (; i < dataSize; i++) {
 
-											//	Define the info window HTML
-											markerText = '<span style="font-family:arial,sans-serif; line-height:150%;" '
-												+ ' onclick="google.maps.closeInfoWindow()" >'
-												+ '<span style="line-height:200%;font-size:120%;text-decoration:underline"><b>'
-												+ 'INFO' + '</b></span>';
+												//	Define the info window HTML
+												markerText = '<span style="font-family:arial,sans-serif; line-height:150%;" '
+													+ ' onclick="google.maps.closeInfoWindow()" >'
+													+ '<span style="line-height:200%;font-size:120%;text-decoration:underline"><b>'
+													+ 'INFO' + '</b></span>';
 
-											//	Add the rest of data to be presented in the info window
-											var measureIndex = 2;
-											j = measureIndex;
-											for (; j < headersSize; j++) {
-												markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
-											}
-											markerText += ' </span>';
+												//	Add the rest of data to be presented in the info window
+												var measureIndex = 2;
+												j = measureIndex;
+												for (; j < headersSize; j++) {
+													markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
+												}
+												markerText += ' </span>';
 
-											//	Get the latitude and longitude for this marker
-											var lat = parseFloat(qresult[i][0]["data"]); // latitude
-											var lng = parseFloat(qresult[i][1]["data"]); // longitude
-											if(isNaN(lat) || isNaN(lng)) continue;
+												//	Get the latitude and longitude for this marker
+												var lat = parseFloat(qresult[i][0]["data"]); // latitude
+												var lng = parseFloat(qresult[i][1]["data"]); // longitude
+												if(isNaN(lat) || isNaN(lng)) continue;
 
-											//	Get the measure label for the clusters
-											if (!clusterLabel) {
-												clusterLabel = headers[measureIndex];
-											}
+												//	Get the measure label for the clusters
+												if (!clusterLabel) {
+													clusterLabel = headers[measureIndex];
+												}
 
-											//	Determine the marker color from Sisense, or use the default
-											var pinColor = '#00A0DC';
-											if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
-												pinColor = qresult[i][3].color;//.replace("#","");
-												if ( colors[pinColor] === undefined )
-													colors[pinColor] = createMarker(10, pinColor);
-											}
+												//	Determine the marker color from Sisense, or use the default
+												var pinColor = '#00A0DC';
+												if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
+													pinColor = qresult[i][3].color;//.replace("#","");
+													if ( colors[pinColor] === undefined )
+														colors[pinColor] = createMarker(10, pinColor);
+												}
 
-											var shape = "circle";
-											if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
-												var item = _.find(savedShapesCategory.items, function(item) {
-													return item.value == qresult[i][4].data;
+												var shape = "circle";
+												if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
+													var item = _.find(savedShapesCategory.items, function(item) {
+														return item.value == qresult[i][4].data;
+													});
+													if(item) {
+														shape = item.shape;
+													}
+												}
+
+												// Create the marker
+												var marker = new google.maps.Marker({
+													map : map,
+													position : new google.maps.LatLng(lat, lng),
+													raiseOnDrag : false,
+													visible : true,
+													draggable : false,
+													icon: (shapeCategory) ? {
+														url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
+														anchor: new google.maps.Point(10, 10)
+													} : colors[pinColor],
+													title : qresult[i][measureIndex]["text"], // the formatted value of each marker
+													value : qresult[i][measureIndex]["data"] // the value of each marker
 												});
-												if(item) {
-													shape = item.shape;
-												}
-											}
+												
+												//	Add data to the marker
+												marker.sisenseTooltip = markerText;
 
-											// Create the marker
-											var marker = new google.maps.Marker({
-												map : map,
-												position : new google.maps.LatLng(lat, lng),
-												raiseOnDrag : false,
-												visible : true,
-												draggable : false,
-												icon: (shapeCategory) ? {
-													url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
-													anchor: new google.maps.Point(10, 10)
-												} : colors[pinColor],
-												title : qresult[i][measureIndex]["text"], // the formatted value of each marker
-												value : qresult[i][measureIndex]["data"] // the value of each marker
-											});
-											
-											//	Add data to the marker
-											marker.sisenseTooltip = markerText;
-
-											markers.push({
-												marker : marker,
-												color: pinColor,
-												shape : (qresult[i][4] && qresult[i][4].data) ? qresult[i][4].data : null
-											});
-
-											if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
-												var item = _.find(savedShapesCategory.items, function(item){
-													return item.value == qresult[i][4].data;
+												markers.push({
+													marker : marker,
+													color: pinColor,
+													shape : (qresult[i][4] && qresult[i][4].data) ? qresult[i][4].data : null
 												});
-												if(item) {
-													item.shape = shape;
+
+												if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
+													var item = _.find(savedShapesCategory.items, function(item){
+														return item.value == qresult[i][4].data;
+													});
+													if(item) {
+														item.shape = shape;
+													}
+													else {
+														savedShapesCategory.items.push({
+															value : qresult[i][4].data,
+															shape: "circle"
+														})
+													}
 												}
-												else {
-													savedShapesCategory.items.push({
-														value : qresult[i][4].data,
-														shape: "circle"
-													})
+												else if (shapeCategory && qresult[i][4] && qresult[i][4].data) {
+													var cat = {
+														column : shapeCategory,
+														items : [{
+															value : qresult[i][4].data,
+															shape: "circle"
+														}]
+													}
+													shapesMetadata = [];
+													shapesMetadata.push(cat);
+													// shapesMetadata = _.filter(shapesMetadata, function(categories){
+													// 	return categories.column == cat.column;
+													// });
+													savedShapesCategory = cat;
 												}
 											}
-											else if (shapeCategory && qresult[i][4] && qresult[i][4].data) {
-												var cat = {
-													column : shapeCategory,
-													items : [{
-														value : qresult[i][4].data,
-														shape: "circle"
-													}]
-												}
-												shapesMetadata = [];
-												shapesMetadata.push(cat);
-												// shapesMetadata = _.filter(shapesMetadata, function(categories){
-												// 	return categories.column == cat.column;
-												// });
-												savedShapesCategory = cat;
-											}
+											//END for
+											map.markers = markers;
 										}
-										//END for
-										map.markers = markers;
+										else { 
+											s.fromReadjust = false;
+										}
+
 
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
@@ -872,6 +893,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 			}
 		},
 
-		destroy : function (s, e) {}
+		destroy : function (s, e) {},
+
+		readjust : function(s, e){
+			s.fromReadjust = true;
+		}
 	});
 }]);
