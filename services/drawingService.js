@@ -421,7 +421,29 @@ mod.service('drawingService', [
                     "datatype": "numeric",
                     "title": fieldName,
                     "collapsed": true,
-                    "filter": {
+                    "filter": 
+                        from > to 
+                        ? 
+                        {
+                        "or": [
+                            {
+                                "and":[{
+                                    "fromNotEqual": from
+                                }, {
+                                    "toNotEqual": 180
+                                }
+                            ]},
+                                {
+                                "and":[{
+                                    "fromNotEqual": -180
+                                }, {
+                                    "toNotEqual": to
+                                }
+                            ]},
+                        ]                     
+                    } 
+                    : 
+                    {
                         "and":[{
                             "fromNotEqual": from
                         }, {
