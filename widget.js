@@ -683,7 +683,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										var oms = new OverlappingMarkerSpiderfier(map, omsOptions);
 
 										//	Define the info window for popups
-										//var infowindow = new google.maps.InfoWindow();
+										var infowindow = new google.maps.InfoWindow();
 
 										//	Init Variables
 										var shapesMetadata = [];
@@ -720,8 +720,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										};
 
 										map.markers = map.markers || [];
-										google.maps.event.trigger(map, 'resize');
-										
+										google.maps.event.trigger(map, 'resize');										
 
 										var i = 0,
 											dataSize = qresult.length,
@@ -757,8 +756,12 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												//	Add the rest of data to be presented in the info window
 												var measureIndex = 2;
 												j = measureIndex;
+												var headersAdded = [];
 												for (; j < headersSize; j++) {
-													markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
+													if(headersAdded.indexOf(headers[j]) == -1) { 
+														markerText += '<br><span>' + headers[j] + ': ' + qresult[i][j]["text"] + '</span>';
+														headersAdded.push(headers[j]);
+													}
 												}
 												markerText += ' </span>';
 
@@ -832,8 +835,12 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												});
  							
 												
+												
 												//	Add data to the marker
 												marker.sisenseTooltip = markerText;
+
+												// Add marker to oms
+												oms.addMarker(marker);
 
 												markers.push({
 													marker : marker,
@@ -885,6 +892,11 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										// Update saved marker shapes and then proceed to update 'Color By' and 'Shape By' Legends
 										e.widget.queryMetadata.savedShapes = shapesMetadata;
 										e.widget.changesMade();
+
+										oms.addListener('click', function(marker, event) {		
+											infowindow.setContent(marker.sisenseTooltip);
+											infowindow.open(map, marker);
+										});
 
 										if ($('#mapSidebar').length < 1) 
 											$legendsService.init(colorCategory, shapeCategory, shapesMetadata, map, e, markers);
