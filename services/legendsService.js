@@ -58,10 +58,10 @@ mod.service('legendsService', [
                 $('#mapSidebarContent').append($('<div id="mapColorLegendContent"></div>'));
                 $('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
 
-                $('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody><tr><th>' + (colorCategory ? colorCategory : "No Results")
-                    +'</th><th></th></tr></tbody></table>'));
-                $('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th>'+ (shapeCategory ? shapeCategory : "No Results")
-                    +'</th><th></th></tr></tbody></table>'));
+                $('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody><tr><th colspan="2">' 
+                    + (colorCategory ? colorCategory : "No Results") + '</th></tr></tbody></table>'));
+                $('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th colspan="2">'
+                    + (shapeCategory ? shapeCategory : "No Results") + '</th></tr></tbody></table>'));
 
                 $('#mapColorLegendContent').height($(map.getDiv()).height() - 70);
                 $('#mapShapeLegendContent').height($(map.getDiv()).height() - 70);
@@ -103,7 +103,22 @@ mod.service('legendsService', [
                         +"</tr>"));
                 });
             },
-
+            
+            addRowsToClusterLegend: function() {
+                var arr = [
+                    { img: "m1", value: "1 - 9",},
+                    { img: "m2", value: "10 - 99",},
+                    { img: "m3", value: "100 - 999",},
+                    { img: "m4", value: "1000 - 9999",},
+                    { img: "m5", value: "10000+",},
+                ];
+                _.each(arr, function(row){
+                    $('#mapSidebarColorTable tbody').append($("<tr id='clusterRow"+row.img+"' class='colorLegendRow'>"
+                        +"<td class='clusterLegendImg'><img src='/plugins/googleMapsWidget/resources/markerclusterer/images/"+row.img +".png';></img></td>"
+                        +"<td class='clusterLegendDescription'><span>"+row.value+"</span></td>"        
+                        +"</tr>"));
+                });
+            },
             
             openShapeSelection: function(row, selector, y) {
                 $('#shapeSelectionWindow').remove();
@@ -207,14 +222,20 @@ mod.service('legendsService', [
                 e.widget.changesMade();
             },
 
+            getRandomShape: function() { 
+                return availableShapes[_.random((availableShapes.length - 1))];
+            },
+
             clear: function(inColorCategory, inShapeCategory) {
+                colorCategory = inColorCategory;
+                shapeCategory = inShapeCategory;
                $("#mapSidebarColorTable tr").remove(); 
                $("#mapSidebarShapeTable tr").remove(); 
 
-               $("#mapSidebarColorTable tbody").append($('<tr><th>' + (colorCategory ? colorCategory : "No Results")
-                    +'</th><th></th></tr>'));
-               $("#mapSidebarShapeTable tbody").append($('<tr><th>' + (shapeCategory ? shapeCategory : "No Results")
-                    +'</th><th></th></tr>'));
+               $("#mapSidebarColorTable tbody").append($('<tr><th colspan="2">' + (colorCategory ? colorCategory : "No Results")
+                    +'</th></tr>'));
+               $("#mapSidebarShapeTable tbody").append($('<tr><th colspan="2">' + (shapeCategory ? shapeCategory : "No Results")
+                    +'</th></tr>'));
             }
         
         }

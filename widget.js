@@ -241,75 +241,81 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 						url: encodeURI('/api/datasources/' + widget.datasource.title + '/jaql'),
 						data: JSON.stringify(countQuery),
 						success: function(data) {
-							var result = data.values[0];
-							var count = (result.length === undefined) ? result.data : result[0].data;
-							var column;
-							if (count > query.count) {
-								try {
-									if (colorPanel && colorPanel.items.length > 0) query.metadata.splice(3,1);
-									if (shapePanel && shapePanel.items.length > 0) query.metadata.splice(3,1);
-									if(detailsPanel){
-										query.metadata.splice(3, detailsPanel.items.length);
-									}
-
-									switch(widget.mapSettings.zoomLevel)
-									{
-										case 8:
-										case 9:
-										case 10:
-										case 11:
-										case 12: 
-										case 13:
-										case 14: column = "1";
-											break;
-										case 15:
-										case 16: 
-										case 17:
-										case 18: column = "2";
-											break;
-										case 19:
-										case 20: column = "3";
-											break;
-										default: // Map's first load
-											column = "0";
-											break;
-									}
-								}
-								catch(err) { column = "0";};
-
-								query.metadata[0].jaql.column = "GeocodeLt" + column;
-								query.metadata[0].jaql.title = "GeocodeLt" + column;
-								query.metadata[0].jaql.dim = "[Well.GeocodeLt" + column + "]";
-								query.metadata[1].jaql.column = "GeocodeLg" + column;
-								query.metadata[1].jaql.title = "GeocodeLg" + column;
-								query.metadata[1].jaql.dim = "[Well.GeocodeLg" + column + "]";
-								query.metadata.push({ 
-									"jaql": {
-										"formula": "COUNT(Id)",
-										"context": {
-										"[Id]": {
-											"table": "Well",
-											"column": "Well Unique Id",
-											"dim": "[Well.Well Unique Id]",
-											"datatype": "numeric"
-										}
-										},
-										"title": "Id Count"
-									}
-								});
+							if(data.error) { 
+								$staticOverlayService.removeOverlay();
 							}
-							else { 						
-								query.metadata[0].jaql.column = "Latitude";
-								query.metadata[0].jaql.title = "Latitude";
-								query.metadata[0].jaql.dim = "[Well.Latitude]";
-								query.metadata[1].jaql.column = "Longitude";
-								query.metadata[1].jaql.title = "Longitude" ;
-								query.metadata[1].jaql.dim = "[Well.Longitude]";
+							else { 
+								var result = data.values[0];
+								var count = (result.length === undefined) ? result.data : result[0].data;
+								var column;
+								if (count > query.count) {
+									try {
+										if (colorPanel && colorPanel.items.length > 0) query.metadata.splice(3,1);
+										if (shapePanel && shapePanel.items.length > 0) query.metadata.splice(3,1);
+										if(detailsPanel){
+											query.metadata.splice(3, detailsPanel.items.length);
+										}
 
+										switch(widget.mapSettings.zoomLevel)
+										{
+											case 8:
+											case 9:
+											case 10:
+											case 11:
+											case 12: 
+											case 13:
+											case 14: column = "1";
+												break;
+											case 15:
+											case 16: 
+											case 17:
+											case 18: column = "2";
+												break;
+											case 19:
+											case 20: column = "3";
+												break;
+											default: // Map's first load
+												column = "0";
+												break;
+										}
+									}
+									catch(err) { column = "0";};
+
+									query.metadata[0].jaql.column = "GeocodeLt" + column;
+									query.metadata[0].jaql.title = "GeocodeLt" + column;
+									query.metadata[0].jaql.dim = "[Well.GeocodeLt" + column + "]";
+									query.metadata[1].jaql.column = "GeocodeLg" + column;
+									query.metadata[1].jaql.title = "GeocodeLg" + column;
+									query.metadata[1].jaql.dim = "[Well.GeocodeLg" + column + "]";
+									query.metadata.push({ 
+										"jaql": {
+											"formula": "COUNT(Id)",
+											"context": {
+											"[Id]": {
+												"table": "Well",
+												"column": "Well Unique Id",
+												"dim": "[Well.Well Unique Id]",
+												"datatype": "numeric"
+											}
+											},
+											"title": "Id Count"
+										}
+									});
+								}
+								else { 						
+									query.metadata[0].jaql.column = "Latitude";
+									query.metadata[0].jaql.title = "Latitude";
+									query.metadata[0].jaql.dim = "[Well.Latitude]";
+									query.metadata[1].jaql.column = "Longitude";
+									query.metadata[1].jaql.title = "Longitude" ;
+									query.metadata[1].jaql.dim = "[Well.Longitude]";
+
+								}
 							}
 						},
 						dataType: 'json',
-						async: false
+						async: false,
+						timeout: 30000
 					});
 
 					return query;
@@ -592,15 +598,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 																	"datatype": "numeric",
 																	"title": "Longitude",
 																	"filter": {
-																		"or": [
-																			{
-																				"from":  SW.lng(),
-																				"to": 180
-																			},
-																			{
-																				"from": -180,
-																				"to": NE.lng()
-																			}]
+																		"from": -180,
+																		"to": NE.lng()
 																	}
 																}
 															};
@@ -775,26 +774,11 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													clusterLabel = headers[measureIndex];
 												}
 
-												//	Determine the marker color from Sisense, or use the default
-												var pinColor = '#00A0DC';
-												if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
-													pinColor = qresult[i][3].color;//.replace("#","");
-													if ( colors[pinColor] === undefined )
-														colors[pinColor] = createMarker(10, pinColor);
-												}
-
-												var shape = "circle";
-												if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
-													var item = _.find(savedShapesCategory.items, function(item) {
-														return item.value == qresult[i][4].data;
-													});
-													if(item) {
-														shape = item.shape;
-													}
-												}
-
 												var isCluster = (qresult[i][3] && !qresult[i][3].color && qresult[i][3].data);
 												var url;
+												var pinColor = '#00A0DC';
+												var shape = "circle";
+
 												if(isCluster) { 
 													var count = qresult[i][3].data;
 													if(count >= 1 && count < 10) { 
@@ -813,6 +797,29 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m5.png";
 													}
 												}
+												else { 
+													//	Determine the marker color from Sisense, or use the default
+													
+													if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
+														pinColor = qresult[i][3].color;//.replace("#","");
+														if ( colors[pinColor] === undefined )
+															colors[pinColor] = createMarker(10, pinColor);
+													}
+
+													if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
+														var item = _.find(savedShapesCategory.items, function(item) {
+															return item.value == qresult[i][4].data;
+														});
+														if(item) {
+															shape = item.shape;
+														}
+														else { 
+															shape = $legendsService.getRandomShape();
+														}
+													}
+												}
+
+												
 
 												// Create the marker
 												var marker = new google.maps.Marker({
@@ -821,7 +828,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													raiseOnDrag : false,
 													visible : true,
 													draggable : false,
-													label: (isCluster) ? qresult[i][3].text : null,
+													//label: (isCluster) ? qresult[i][3].text : null,
 													icon: 
 													(isCluster) ? { 
 														url : url,
@@ -858,7 +865,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													else {
 														savedShapesCategory.items.push({
 															value : qresult[i][4].data,
-															shape: "circle"
+															shape: shape
 														})
 													}
 												}
@@ -867,14 +874,11 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 														column : shapeCategory,
 														items : [{
 															value : qresult[i][4].data,
-															shape: "circle"
+															shape: shape
 														}]
 													}
 													shapesMetadata = [];
 													shapesMetadata.push(cat);
-													// shapesMetadata = _.filter(shapesMetadata, function(categories){
-													// 	return categories.column == cat.column;
-													// });
 													savedShapesCategory = cat;
 												}
 											}
@@ -898,16 +902,20 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											infowindow.open(map, marker);
 										});
 
+										
 										if ($('#mapSidebar').length < 1) 
-											$legendsService.init(colorCategory, shapeCategory, shapesMetadata, map, e, markers);
+											$legendsService.init((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory, shapesMetadata, map, e, markers);
 										else
-											$legendsService.clear(colorCategory, shapeCategory)
+											$legendsService.clear((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory)
 
 										if(shapeArray) {
 											$legendsService.addRowsToShapeBy(shapeArray);
 										}
 
-										if(colorArray) {
+										if(!colorArray || colorArray.length == 0) {
+											$legendsService.addRowsToClusterLegend();
+										}
+										else { 
 											$legendsService.addRowsToColorLegend(colorArray);
 										}
 
@@ -956,6 +964,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 		readjust : function(s, e){
 			s.fromReadjust = true;
 			$staticOverlayService.readjustOverlay();
+		},
+		
+		initialized : function(s, e) { 
+			s.fromReadjust = false;
 		}
 	});
 }]);
