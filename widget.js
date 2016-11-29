@@ -956,6 +956,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 		readjust : function(s, e){
 			s.fromReadjust = true;
 			$staticOverlayService.readjustOverlay();
+		},
+		
+		initialized : function(s, e) { 
+			s.fromReadjust = false;
 		}
 	});
 }]);
