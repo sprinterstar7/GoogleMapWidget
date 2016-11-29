@@ -22,3 +22,17 @@ function setWidgetMap(widgetOid,map){
     }
 }
 
+mod.directive('updateBall', [
+    function ($url, $timeout, $device) {
+        return {
+            restrict: 'C',
+            link: function (scope, element, attrs) {
+                $(".update-ball").click(function(scope, element, attrs){
+                    if ( $("#mapRefresh")[0] && $("#mapRefresh")[0].style.display !== 'none' ) {
+                        $("#mapRefresh").trigger("click");
+                    }
+                });
+            }
+        }
+    }
+]);
