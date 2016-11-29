@@ -748,7 +748,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											for (; i < dataSize; i++) {
 
 												//	Define the info window HTML
-												markerText = '<span style="font-family:arial,sans-serif; line-height:150%;" '
+												markerText = '<span class="markerInfoBox" style="font-family:arial,sans-serif; line-height:150%;" '
 													+ ' onclick="google.maps.closeInfoWindow()" >'
 													+ '<span style="line-height:200%;font-size:120%;text-decoration:underline"><b>'
 													+ 'INFO' + '</b></span>';

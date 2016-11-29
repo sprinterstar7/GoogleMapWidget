@@ -323,8 +323,12 @@
 
 #mapOverlay { 
     position: absolute;
-    z-index: 10000;
+    z-index: 2000;
     background-color: hsla(0, 0%, 100%, .45);
     top: 0;
     left: 0;
+}
+
+.markerInfoBox {
+    color: #000;
 }
