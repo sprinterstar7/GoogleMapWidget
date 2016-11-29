@@ -425,32 +425,20 @@ mod.service('drawingService', [
                         from > to 
                         ? 
                         {
-                        "or": [
-                            {
-                                "and":[{
-                                    "fromNotEqual": from
-                                }, {
-                                    "toNotEqual": 180
-                                }
-                            ]},
-                                {
-                                "and":[{
-                                    "fromNotEqual": -180
-                                }, {
-                                    "toNotEqual": to
-                                }
-                            ]},
-                        ]                     
-                    } 
-                    : 
-                    {
-                        "and":[{
-                            "fromNotEqual": from
-                        }, {
-                            "toNotEqual": to
-                        }
-                        ]
-                    }
+                            "and":[{
+                                "fromNotEqual": -180
+                            }, {
+                                "toNotEqual": to
+                            }
+                        ]}
+                        : 
+                        {
+                            "and":[{
+                                "fromNotEqual": from
+                            }, {
+                                "toNotEqual": to
+                            }
+                        ]}
                 }]}
             },
     
