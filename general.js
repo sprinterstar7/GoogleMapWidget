@@ -21,7 +21,7 @@ function setWidgetMap(widgetOid,map){
         maps[widgetOid] = map;
     }
 }
-
+/*
 mod.directive('updateBall', [
     function ($url, $timeout, $device) {
         return {
@@ -35,4 +35,4 @@ mod.directive('updateBall', [
             }
         }
     }
-]);
+]);*/

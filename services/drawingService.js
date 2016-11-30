@@ -345,7 +345,7 @@ mod.service('drawingService', [
                 return {
                     "measure": {
 
-                        "formula": "12742*asin(SQRT(0.5-cos((([lat]-" + centerLat + ")*0.017453292519943295))/2+cos(" + centerLat + "*0.017453292519943295)*cos([lat]*0.017453292519943295)*(1-cos((([lng]-" + centerLng + ")*0.017453292519943295)))/2))",
+                        "formula":"ACOS(((SIN((" +centerLat + "*0.0174532925199433))*SIN(([lat]*0.0174532925199433)))+ (COS((" + centerLat + "*0.0174532925199433))*COS(([lat]*0.0174532925199433))*COS(([lng]*0.0174532925199433-" + centerLng + "*0.0174532925199433))))) *  6378.137 ",
                         "context": {
                             "[lng]": {
                                 "table": "Well",

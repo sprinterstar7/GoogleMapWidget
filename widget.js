@@ -190,6 +190,39 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 							"title": "Id Count"
 						}
 					});
+					var i = 0;
+					for(; i<3; i++) {
+						countQuery.metadata.push({
+							"jaql": {
+								"formula":"COUNT(lt)",
+								"context": {
+									"[lt]" : {
+										"table": "Well",
+										"column": "GeocodeLt" + i,
+        								"dim": "[Well.GeocodeLt" + i + "]",
+										"datatype": "numeric"
+									}
+								},
+
+								"title": "GeocodeLt" + i + " Count"
+							}
+						});
+						countQuery.metadata.push({
+							"jaql": {
+								"formula":"COUNT(lg)",
+								"context": {
+									"[lg]" : {
+										"table": "Well",
+										"column": "GeocodeLg" + i,
+        								"dim": "[Well.GeocodeLg" + i + "]",
+										"datatype": "numeric"
+									}
+								},
+
+								"title": "GeocodeLg" + i + " Count"
+							}
+						});
+					}
 
 					// pushing items
 					widget.metadata.panel("latlng").items.forEach(function (item) {
@@ -256,23 +289,34 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											query.metadata.splice(3, detailsPanel.items.length);
 										}
 
+										var lv0 = Math.max(data.values[1].data, data.values[2].data),
+											lv1 = Math.max(data.values[3].data, data.values[4].data),
+											lv2 = Math.max(data.values[5].data, data.values[6].data);
+										
 										switch(widget.mapSettings.zoomLevel)
 										{
+											case 1:
+											case 2:
+											case 3:
+											case 4:
+											case 5: 
+											case 6:
+											case 7: column = ( lv2 <= 1000 ) ? "2" : ( lv1 <= 1000 ) ? "1" : "0";
+												break;
 											case 8:
 											case 9:
 											case 10:
 											case 11:
 											case 12: 
 											case 13:
-											case 14: column = "1";
+											case 14: column = ( lv2 <= 10000 ) ? "2" : ( lv1 <= 10000 ) ? "1" : "0";
 												break;
 											case 15:
 											case 16: 
 											case 17:
-											case 18: column = "2";
-												break;
+											case 18: 
 											case 19:
-											case 20: column = "3";
+											case 20: column = ( lv2 <= 25000 ) ? "2" : ( lv1 <= 25000 ) ? "1" : "0";
 												break;
 											default: // Map's first load
 												column = "0";
