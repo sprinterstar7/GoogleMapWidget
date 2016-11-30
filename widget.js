@@ -361,7 +361,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 						async: false,
 						timeout: 30000
 					});
-
+					
 					return query;
 				}			
 			
@@ -378,10 +378,20 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 						cache : true
 					});
 				}
-
+				if($('#mapOverlay').length > 0) { 
+					$staticOverlayService.removeClickFromOverlay();
+				}
 				return queryResult;
 			}
 		},
+
+		//Have to do this in case query errors out, makes the div able to click-through momentarily
+		querystart : function (widget) { 
+			if($('#mapOverlay').length > 0) { 
+				$staticOverlayService.addClickToOverlay();
+			}
+		},
+
 		render : function (s, e) {
 			var map;
 			var boundsChangedOnce = false;
@@ -631,38 +641,20 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 															}
 														};
 														
-														var long;
-														
-														if(SW.lng() > NE.lng()){
-															long = {
-																"jaql": {
-																	"table": "Well",
-																	"column": "Longitude",
-																	"dim": "[Well.Longitude]",
-																	"datatype": "numeric",
-																	"title": "Longitude",
-																	"filter": {
-																		"from": -180,
-																		"to": NE.lng()
-																	}
+														var long = {
+															"jaql": {
+																"table": "Well",
+																"column": "Longitude",
+																"dim": "[Well.Longitude]",
+																"datatype": "numeric",
+																"title": "Longitude",
+																"filter":
+																{
+																	"from": (SW.lng() > NE.lng()) ? -180 : SW.lng(),
+																	"to":  NE.lng(),
 																}
-															};
-														} 
-														else { 
-															long = {
-																"jaql": {
-																	"table": "Well",
-																	"column": "Longitude",
-																	"dim": "[Well.Longitude]",
-																	"datatype": "numeric",
-																	"title": "Longitude",
-																	"filter": {
-																		"from": SW.lng(),
-																		"to":  NE.lng(),
-																	}
-																}
-															};
-														}
+															}
+														};
 
 														var options = {
 															save: true,
@@ -714,8 +706,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										}
 
 										map = widgetMap;
-
-									
 
 										//	Create an object to handle multiple markers at the same coordinates
 										var omsOptions = {
@@ -843,7 +833,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												}
 												else { 
 													//	Determine the marker color from Sisense, or use the default
-													
 													if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
 														pinColor = qresult[i][3].color;//.replace("#","");
 														if ( colors[pinColor] === undefined )
@@ -863,8 +852,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													}
 												}
 
-												
-
 												// Create the marker
 												var marker = new google.maps.Marker({
 													map : map,
@@ -872,21 +859,15 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													raiseOnDrag : false,
 													visible : true,
 													draggable : false,
-													//label: (isCluster) ? qresult[i][3].text : null,
-													icon: 
-													(isCluster) ? { 
-														url : url,
-														anchor: new google.maps.Point(10, 10)
-													} : (shapeCategory) ? {
-														url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + pinColor.replace('#', ''),
-														anchor: new google.maps.Point(10, 10)
-													} : colors[pinColor],
+													icon: (isCluster) ? { url : url
+														, anchor: new google.maps.Point(10, 10) } 
+													: (shapeCategory) ? { url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + pinColor.replace('#', '')
+														, anchor: new google.maps.Point(10, 10) } 
+													: colors[pinColor],
 													title : qresult[i][measureIndex]["text"], // the formatted value of each marker
 													value : qresult[i][measureIndex]["data"] // the value of each marker
 												});
  							
-												
-												
 												//	Add data to the marker
 												marker.sisenseTooltip = markerText;
 
@@ -930,8 +911,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											map.markers = markers;
 
 											$staticOverlayService.removeOverlay();
-
-											
 										}
 										else { 
 											s.fromReadjust = false;
@@ -945,8 +924,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											infowindow.setContent(marker.sisenseTooltip);
 											infowindow.open(map, marker);
 										});
-
-										
+						
 										if ($('#mapSidebar').length < 1) 
 											$legendsService.init((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory, shapesMetadata, map, e, markers);
 										else
@@ -962,7 +940,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										else { 
 											$legendsService.addRowsToColorLegend(colorArray);
 										}
-
 
 										function setMapTimer() {
 											clearTimeout(mapupdater);
