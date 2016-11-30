@@ -21,7 +21,7 @@ function setWidgetMap(widgetOid,map){
         maps[widgetOid] = map;
     }
 }
-/*
+
 mod.directive('updateBall', [
     function ($url, $timeout, $device) {
         return {
@@ -29,10 +29,12 @@ mod.directive('updateBall', [
             link: function (scope, element, attrs) {
                 $(".update-ball").click(function(scope, element, attrs){
                     if ( $("#mapRefresh")[0] && $("#mapRefresh")[0].style.display !== 'none' ) {
+                         scope.stopImmediatePropagation();
+                    
                         $("#mapRefresh").trigger("click");
                     }
                 });
             }
         }
     }
-]);*/
+]);
