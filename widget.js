@@ -11,6 +11,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 		family : "maps",
 		title : "Google Maps",
 		iconSmall : "/plugins/googleMapsWidget/resources/images/widget-24.png",
+		hideNoResults: true,
 		styleEditorTemplate : null,
 		style : {},
 		// sizing must be stated
