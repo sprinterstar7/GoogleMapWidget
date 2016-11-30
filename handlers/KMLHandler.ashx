@@ -85,6 +85,57 @@ public class KMLHandler : IHttpHandler
                 case 14:
                     fileName = "RSEG Eagleford Combined 4.kmz";
                     break;
+                case 15:
+                    fileName = "Barnett2.kmz";
+                    break;
+                case 16:
+                    fileName = "DJ Basin Combined 1.kmz";
+                    break;
+                case 17:
+                    fileName = "DJ Basin Combined 2.kmz";
+                    break;
+                case 18:
+                    fileName = "Eaglebine.kmz";
+                    break;
+                case 19:
+                    fileName = "Fayetteville.kmz";
+                    break;
+                case 20:
+                    fileName = "Haynesville.kmz";
+                    break;
+                case 21:
+                    fileName = "Marcellus.kmz";
+                    break;
+                case 22:
+                    fileName = "Permian Combined 1.kmz";
+                    break;
+                case 23:
+                    fileName = "Permian Combined 2.kmz";
+                    break;
+                case 24:
+                    fileName = "Permian Combined 3.kmz";
+                    break;
+                case 25:
+                    fileName = "Permian Combined 4.kmz";
+                    break;
+                case 26:
+                    fileName = "PRB.kmz";
+                    break;
+                case 27:
+                    fileName = "San Juan.kmz";
+                    break;
+                case 28:
+                    fileName = "TMS.kmz";
+                    break;
+                case 29:
+                    fileName = "Utica Combined 1.kmz";
+                    break;
+                case 30:
+                    fileName = "Utica Combined 2.kmz";
+                    break;
+                case 31:
+                    fileName = "Woodford.kmz";
+                    break;
                 default:
                     fileName = "Midwest Rail.kml";
                     break;

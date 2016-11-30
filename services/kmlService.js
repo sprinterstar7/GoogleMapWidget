@@ -16,7 +16,19 @@ mod.service('kmlService', [
             { id: 5, title: 'Proppant Mine Locations' },
             { id: 4, title: 'Transload Terminal Locations' },
             { id: 0, title: 'US Rail Network' },
-            { id: 6, title: 'Eagleford Basin' }
+            { id: 15, title: 'Barnett Basin' },
+            { id: 16, title: 'DJ Basin' },
+            { id: 18, title: 'Eaglebine Basin' },
+            { id: 6, title: 'Eagleford Basin' },
+            { id: 19, title: 'Fayetteville Basin' },
+            { id: 20, title: 'Haynesville Basin' },
+            { id: 21, title: 'Marcellus Basin' },
+            { id: 22, title: 'Permian Basin' },
+            { id: 26, title: 'PRB Basin' },
+            { id: 27, title: 'San Juan Basin' },
+            { id: 28, title: 'TMS Basin' },
+            { id: 29, title: 'Utica Basin' },
+            { id: 31, title: 'Woodford Basin' }
         ];
 
         var serviceFunctions =  { 
@@ -104,6 +116,7 @@ mod.service('kmlService', [
                         }
                     }
                 }
+                //Eagleford
                 else if (kmlId === 6) {
                     //First time click
                     if (!serviceFunctions.usRailsAdded() && !serviceFunctions.hasBeenClicked(kmlId)) {
@@ -118,6 +131,69 @@ mod.service('kmlService', [
                         $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
                         _.each(_presentKMLLayers, function (loc) {
                             if (loc.kmlId > 5 && loc.kmlId < 15) {
+                                loc.checked = !loc.checked;
+                                loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
+                            }
+                        });
+                    }
+                }
+                //DJ Basin
+                else if (kmlId === 16) {
+                    //First time click
+                    if (!serviceFunctions.usRailsAdded() && !serviceFunctions.hasBeenClicked(kmlId)) {
+                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
+                        for (var i = 16; i < 18; i++) {
+                            serviceFunctions.loadLayer(i);
+                        }
+                        _layersClickedOnce.push(16)
+                    }
+                    //Toggle attributes if not first click
+                    else {
+                        $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+                        _.each(_presentKMLLayers, function (loc) {
+                            if (loc.kmlId > 15 && loc.kmlId < 18) {
+                                loc.checked = !loc.checked;
+                                loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
+                            }
+                        });
+                    }
+                }
+                //Permian Basin
+                else if (kmlId === 22) {
+                    //First time click
+                    if (!serviceFunctions.usRailsAdded() && !serviceFunctions.hasBeenClicked(kmlId)) {
+                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
+                        for (var i = 22; i < 26; i++) {
+                            serviceFunctions.loadLayer(i);
+                        }
+                        _layersClickedOnce.push(22)
+                    }
+                    //Toggle attributes if not first click
+                    else {
+                        $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+                        _.each(_presentKMLLayers, function (loc) {
+                            if (loc.kmlId > 21 && loc.kmlId < 26) {
+                                loc.checked = !loc.checked;
+                                loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
+                            }
+                        });
+                    }
+                }
+                //Utica Basin
+                else if (kmlId === 29) {
+                    //First time click
+                    if (!serviceFunctions.usRailsAdded() && !serviceFunctions.hasBeenClicked(kmlId)) {
+                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
+                        for (var i = 29; i < 31; i++) {
+                            serviceFunctions.loadLayer(i);
+                        }
+                        _layersClickedOnce.push(29)
+                    }
+                    //Toggle attributes if not first click
+                    else {
+                        $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+                        _.each(_presentKMLLayers, function (loc) {
+                            if (loc.kmlId > 28 && loc.kmlId < 31) {
                                 loc.checked = !loc.checked;
                                 loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
                             }
@@ -158,6 +234,15 @@ mod.service('kmlService', [
                 //If a US rail, check if 0 is selected
                 if(kmlId > 5 && kmlId < 15){
                     kmlId = 6;
+                }
+                else if(kmlId > 15 && kmlId < 18){
+                    kmlId = 16;
+                }
+                else if(kmlId > 21 && kmlId < 26){
+                    kmlId = 22;
+                }
+                else if(kmlId > 28 && kmlId < 31){
+                    kmlId = 29;
                 }
                 else if (kmlId < 4){
                     kmlId = 0;
