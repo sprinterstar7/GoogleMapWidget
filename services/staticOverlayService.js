@@ -30,6 +30,14 @@ mod.service('staticOverlayService', [
                 $('#mapOverlay').hide();
             },
 
+            addClickToOverlay: function() { 
+                $('#mapOverlay').css('pointer-events', 'none');
+            },
+
+            removeClickFromOverlay: function() { 
+                $('#mapOverlay').css('pointer-events', '');
+            },
+
             readjustOverlay: function() { 
                 $('#mapOverlay').height($(map.getDiv()).height());
                 $('#mapOverlay').width($(map.getDiv()).width());
