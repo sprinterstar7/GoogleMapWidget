@@ -10,25 +10,26 @@ mod.service('kmlService', [
             _layerRetries = 0,
             widgetMap,
             google,
-            map
+            map,
+            numberOfFilesPresent = 0;
 
         var kmlLayers = [
-            { id: 5, title: 'Proppant Mine Locations' },
-            { id: 4, title: 'Transload Terminal Locations' },
-            { id: 0, title: 'US Rail Network' },
-            { id: 15, title: 'Barnett Basin' },
-            { id: 16, title: 'DJ Basin' },
-            { id: 18, title: 'Eaglebine Basin' },
-            { id: 6, title: 'Eagleford Basin' },
-            { id: 19, title: 'Fayetteville Basin' },
-            { id: 20, title: 'Haynesville Basin' },
-            { id: 21, title: 'Marcellus Basin' },
-            { id: 22, title: 'Permian Basin' },
-            { id: 26, title: 'PRB Basin' },
-            { id: 27, title: 'San Juan Basin' },
-            { id: 28, title: 'TMS Basin' },
-            { id: 29, title: 'Utica Basin' },
-            { id: 31, title: 'Woodford Basin' }
+            { id: 5,  title: 'Proppant Mine Locations', files: 1 },
+            { id: 4,  title: 'Transload Terminal Locations', files: 1 },
+            { id: 0,  title: 'US Rail Network', files: 4 },
+            { id: 15, title: 'Barnett Basin', files: 1 },
+            { id: 16, title: 'DJ Basin', files: 2 },
+            { id: 18, title: 'Eaglebine Basin', files: 1 },
+            { id: 6,  title: 'Eagleford Basin', files: 9 },
+            { id: 19, title: 'Fayetteville Basin', files: 1 },
+            { id: 20, title: 'Haynesville Basin', files: 1 },
+            { id: 21, title: 'Marcellus Basin', files: 1 },
+            { id: 22, title: 'Permian Basin', files: 4 },
+            { id: 26, title: 'PRB Basin', files: 1 },
+            { id: 27, title: 'San Juan Basin', files: 1 },
+            { id: 28, title: 'TMS Basin', files: 1 },
+            { id: 29, title: 'Utica Basin', files: 2 },
+            { id: 31, title: 'Woodford Basin', files: 1 }
         ];
 
         var serviceFunctions =  { 
@@ -41,6 +42,13 @@ mod.service('kmlService', [
                 serviceFunctions.CenterControl(controlDiv, widgetMap);
                 controlDiv.index = 1;
                 widgetMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+
+                var errorDiv = $('<div id="mapErrorDiv"><div id="mapErrorDivContent"><h3>Warning</h3>Too many KML files loaded into memory, please refresh the page to select new ones.</div></div>')
+                $(map.getDiv()).append(errorDiv);
+                $('#mapErrorDiv').hide();
+                $('#mapErrorDiv').on('click', function(){
+                    $( "#mapErrorDiv" ).fadeOut(250, "linear", function() {});
+                });
             },
 
             CenterControl: function(controlDiv, map) { 
@@ -93,7 +101,20 @@ mod.service('kmlService', [
 
                     // Setup the click event listeners: simply set the map to Chicago.
                     a.addEventListener('click', function () {
-                        serviceFunctions.setKMLLayer(layer.id);
+                        var present = serviceFunctions.hasBeenClicked(layer.id);
+                        if(!present && numberOfFilesPresent + layer.files > 14) { 
+                            $( "#mapErrorDiv" ).fadeIn(250, "linear", function() {
+                                setTimeout(function(){ 
+                                     $( "#mapErrorDiv" ).fadeOut(250, "linear", function() {});
+                                }, 5000);
+                            });
+                        }
+                        else { 
+                            serviceFunctions.setKMLLayer(layer.id);
+                            if(!present) { 
+                                numberOfFilesPresent += layer.files;
+                            }
+                        }
                     });
 
                     a.innerHTML = layer.title;
@@ -105,7 +126,7 @@ mod.service('kmlService', [
                 control.appendChild(ul);
             },
 
-            setKMLLayer: function(kmlId) {
+            setKMLLayer: function(kmlId, nof) {
                 //All US Rail Networks
                 if (kmlId === 0) {
                     //First time click
@@ -287,12 +308,15 @@ mod.service('kmlService', [
             loadLayer: function(id) {
                 return $.ajax({
                     url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
+                    //For testing:
+                    //url: "/KMLHandler.ashx?id=" + id + "&username=" + 'vvarallo@navport.com',
                     //data: { "id": id },
                     method: "POST",
                     dataType: "JSON"
                 }).done(function (data) {
                     if (data.success) {
-                        //var longUrl= "http://" + location.host + "/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
+                        //For Testing
+                        //var longUrl= "http://qavm.eastus2.cloudapp.azure.com/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
                         // Use for the KML in Sisense
                         var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
                         var request = gapi.client.urlshortener.url.insert({

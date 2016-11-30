@@ -348,3 +348,19 @@
 .markerInfoBox {
     color: #000;
 }
+
+#mapErrorDiv { 
+    position: absolute;
+    right: 220px;
+    top: 5px;
+    height: 100px;
+    width: 200px;
+    background: rgba(177, 29, 68, .75);
+    color: white;
+    cursor: pointer;
+}
+
+#mapErrorDivContent {
+    margin: 5px;
+    font-size: 16px;
+}
