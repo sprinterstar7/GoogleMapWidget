@@ -269,7 +269,6 @@ mod.service('kmlService', [
                                     serviceFunctions.checkForLayer(kmlLayer, id, kmlUrl);
                                 }
                                 else { 
-                                    console.log('whoops');
                                     item.kmlLayer.setMap(null);
                                     delete item.kmlLayer;
                                     delete item;
@@ -288,8 +287,7 @@ mod.service('kmlService', [
                 //If fails, just try again, up to 10 times
                 var _layerRetries = 0;
                 var interval = setInterval(function () {
-                    if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {       
-                        console.log('okay');              
+                    if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {     
                         clearInterval(interval);
                     }
                     else {
