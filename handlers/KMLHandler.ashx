@@ -52,10 +52,10 @@ public class KMLHandler : IHttpHandler
                     fileName = "West Rail.kml";
                     break;
                 case 4:
-                    fileName = "Terminals 10-6.kml";
+                    fileName = "Terminals 11-29.kml";
                     break;
                 case 5:
-                    fileName = "Mines 10-6.kml";
+                    fileName = "Prop Mines 11-29.kml";
                     break;
                 //RSEG KMZ Files
                 case 6:
