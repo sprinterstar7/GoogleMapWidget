@@ -52,7 +52,7 @@ public class KMLHandler : IHttpHandler
                     fileName = "West Rail.kml";
                     break;
                 case 4:
-                    fileName = "Terminals 11-29.kml";
+                    fileName = "Transload 11-29.kml";
                     break;
                 case 5:
                     fileName = "Prop Mines 11-29.kml";

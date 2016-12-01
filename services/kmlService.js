@@ -12,6 +12,20 @@ mod.service('kmlService', [
             map,
             numberOfFilesPresent = 0;
 
+        /*
+            Steps to add a KML file(s) to the list.
+            1. Place the file(s) in NavPortWebMVC/Content/assets/explorer/kml/
+            2. Add the file to ExplorerController.cs in the MVC application under the GetKmlLayerDownloadtoken method. Record the switch-case numbers.
+            3. Reflect these changes in KMLHandler.ashx in the MVC application.
+            4. Reflect these changes in this project under handlers/KMLHansler.ashx
+            4. Update the ReturnKmlLayer function with new file(s).
+            5. Create an object in the kmlLayers[] array with the beginning switch-case number, friendly name of the file to display, 
+                and number of files that should be loaded on a single click to generate the entire area (See below). 
+            6. Update the layerIsSelected() function with the beginning switch case number and end switch-case number if there are multiple files. 
+            7. Reflect these changes (steps 5 & 6) in the MVC application's explorer.kml.JSON
+            8. Pull request, merge, clean, rebuild, and deploy as usual for MVC application and widget. 
+        */
+
         var kmlLayers = [
             { id: 5,  title: 'Proppant Mine Locations', files: 1 },
             { id: 4,  title: 'Transload Terminal Locations', files: 1 },
@@ -232,18 +246,18 @@ mod.service('kmlService', [
 
             loadLayer: function(id) {
                 return $.ajax({
-                    //url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
+                    url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
                     //For testing:
-                    url: "/KMLHandler.ashx?id=" + id + "&username=" + 'vvarallo@navport.com',
+                    //url: "/KMLHandler.ashx?id=" + id + "&username=" + 'vvarallo@navport.com',
                     //data: { "id": id },
                     method: "POST",
                     dataType: "JSON"
                 }).done(function (data) {
                     if (data.success) {
                         //For Testing
-                        var longUrl= "http://qavm.eastus2.cloudapp.azure.com/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
+                        //var longUrl= "http://qavm.eastus2.cloudapp.azure.com/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
                         // Use for the KML in Sisense
-                        //var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+                        var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
                         var request = gapi.client.urlshortener.url.insert({
                             'resource': {
                                 'longUrl': longUrl
