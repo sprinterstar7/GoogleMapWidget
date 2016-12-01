@@ -342,10 +342,13 @@ mod.service('drawingService', [
             },
 
             createCircleFilter: function(centerLat,centerLng,radius) {
+                centerLng = centerLng < 0 ? "-1*" + Math.abs(centerLng) : centerLng ;
+                centerLat = centerLat < 0 ? "-1*" + Math.abs(centerLat) : centerLat ;
+                
                 return {
                     "measure": {
 
-                        "formula":"ACOS(((SIN((" +centerLat + "*0.0174532925199433))*SIN(([lat]*0.0174532925199433)))+ (COS((" + centerLat + "*0.0174532925199433))*COS(([lat]*0.0174532925199433))*COS(([lng]*0.0174532925199433-" + centerLng + "*0.0174532925199433))))) *  6378.137 ",
+                        "formula": "ACOS(((SIN((" +centerLat + "*0.0174532925199433))*SIN(([lat]*0.0174532925199433)))+ (COS((" + centerLat + "*0.0174532925199433))*COS(([lat]*0.0174532925199433))*COS(([lng]*0.0174532925199433-" + centerLng + "*0.0174532925199433))))) *  6378137", 
                         "context": {
                             "[lng]": {
                                 "table": "Well",
@@ -365,7 +368,7 @@ mod.service('drawingService', [
                             }
                         }
                     },
-                    "toNotEqual" : (radius/1000).toString()
+                    "toNotEqual" : radius
                 };
             },
 
