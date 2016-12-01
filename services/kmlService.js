@@ -232,18 +232,18 @@ mod.service('kmlService', [
 
             loadLayer: function(id) {
                 return $.ajax({
-                    //url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
+                    url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
                     //For testing:
-                    url: "/KMLHandler.ashx?id=" + id + "&username=" + 'vvarallo@navport.com',
+                    //url: "/KMLHandler.ashx?id=" + id + "&username=" + 'vvarallo@navport.com',
                     //data: { "id": id },
                     method: "POST",
                     dataType: "JSON"
                 }).done(function (data) {
                     if (data.success) {
                         //For Testing
-                        var longUrl= "http://qavm.eastus2.cloudapp.azure.com/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
+                        //var longUrl= "http://qavm.eastus2.cloudapp.azure.com/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
                         // Use for the KML in Sisense
-                        //var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+                        var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
                         var request = gapi.client.urlshortener.url.insert({
                             'resource': {
                                 'longUrl': longUrl
