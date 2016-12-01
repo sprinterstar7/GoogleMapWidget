@@ -6,17 +6,29 @@ mod.service('kmlService', [
 
         var _kmlControlsShowing = false,
             _presentKMLLayers = [],
-            _layersClickedOnce = [],
-            _layerRetries = 0,
+            _layersClicked = [],
             widgetMap,
             google,
-            map
+            map,
+            numberOfFilesPresent = 0;
 
         var kmlLayers = [
-            { id: 5, title: 'Proppant Mine Locations' },
-            { id: 4, title: 'Transload Terminal Locations' },
-            { id: 0, title: 'US Rail Network' },
-            { id: 6, title: 'Eagleford Basin' }
+            { id: 5,  title: 'Proppant Mine Locations', files: 1 },
+            { id: 4,  title: 'Transload Terminal Locations', files: 1 },
+            { id: 0,  title: 'US Rail Network', files: 4 },
+            { id: 15, title: 'Barnett Basin', files: 1 },
+            { id: 16, title: 'DJ Basin', files: 2 },
+            { id: 18, title: 'Eaglebine Basin', files: 1 },
+            { id: 6,  title: 'Eagleford Basin', files: 9 },
+            { id: 19, title: 'Fayetteville Basin', files: 1 },
+            { id: 20, title: 'Haynesville Basin', files: 1 },
+            { id: 21, title: 'Marcellus Basin', files: 1 },
+            { id: 22, title: 'Permian Basin', files: 4 },
+            { id: 26, title: 'PRB Basin', files: 1 },
+            { id: 27, title: 'San Juan Basin', files: 1 },
+            { id: 28, title: 'TMS Basin', files: 1 },
+            { id: 29, title: 'Utica Basin', files: 2 },
+            { id: 31, title: 'Woodford Basin', files: 1 }
         ];
 
         var serviceFunctions =  { 
@@ -29,6 +41,18 @@ mod.service('kmlService', [
                 serviceFunctions.CenterControl(controlDiv, widgetMap);
                 controlDiv.index = 1;
                 widgetMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+
+                var errorDiv = $('<div id="mapErrorDiv">' +
+                    '<div id="mapErrorDivContent">' + 
+                        '<h3>Warning</h3> Too many KML layers loaded onto map, please remove a layer and try again.' + 
+                    '</div>' + 
+                '</div>')
+
+                $(map.getDiv()).append(errorDiv);
+                $('#mapErrorDiv').hide();
+                $('#mapErrorDiv').on('click', function(){
+                    $( "#mapErrorDiv" ).fadeOut(250, "linear", function() {});
+                });
             },
 
             CenterControl: function(controlDiv, map) { 
@@ -81,112 +105,119 @@ mod.service('kmlService', [
 
                     // Setup the click event listeners: simply set the map to Chicago.
                     a.addEventListener('click', function () {
-                        serviceFunctions.setKMLLayer(layer.id);
+                        var present = serviceFunctions.hasBeenClicked(layer.id);
+                        if(!present && numberOfFilesPresent + layer.files > 14) { 
+                            $( "#mapErrorDiv" ).fadeIn(250, "linear", function() {
+                                setTimeout(function(){ 
+                                     $( "#mapErrorDiv" ).fadeOut(250, "linear", function() {});
+                                }, 5000);
+                            });
+                        }
+                        else { 
+                            serviceFunctions.setKMLLayer(layer.id, layer.files);
+                            if(present) { 
+                                numberOfFilesPresent -= layer.files;
+                            }
+                            else { 
+                                numberOfFilesPresent += layer.files;
+                            }
+                        }
                     });
 
                     a.innerHTML = layer.title;
-
                     li.appendChild(a);
                     ul.appendChild(li);
+
                 });
 
                 control.appendChild(ul);
             },
 
-            setKMLLayer: function(kmlId) {
+            setKMLLayer: function(kmlId, nof) {
                 //All US Rail Networks
-                if (kmlId === 0) {
+                if (nof > 1) {
                     //First time click
-                    if (!serviceFunctions.usRailsAdded() && !serviceFunctions.hasBeenClicked(kmlId)) {
+                    var maxFile = kmlId + nof;
+                    if (!serviceFunctions.hasBeenClicked(kmlId)) {
                         $('#KMLLayerCheckBox'+kmlId).css("color", "rgb(247, 149, 72)");
-                        for (var i = 0; i < 4; i++) {
+                        for (var i = kmlId; i < maxFile; i++) {
                             serviceFunctions.loadLayer(i);
                         }
-                    }
-                }
-                else if (kmlId === 6) {
-                    //First time click
-                    if (!serviceFunctions.usRailsAdded() && !serviceFunctions.hasBeenClicked(kmlId)) {
-                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
-                        for (var i = 6; i < 15; i++) {
-                            serviceFunctions.loadLayer(i);
-                        }
-                        _layersClickedOnce.push(6)
+                        _layersClicked.push(kmlId)
                     }
                     //Toggle attributes if not first click
                     else {
-                        $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-                        _.each(_presentKMLLayers, function (loc) {
-                            if (loc.kmlId > 5 && loc.kmlId < 15) {
-                                loc.checked = !loc.checked;
-                                loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
+                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(188, 189, 192)");
+                            _.each(_presentKMLLayers, function (loc) {
+                            if (loc.kmlId >= kmlId && loc.kmlId < maxFile) {
+                                loc.kmlLayer.setMap(null);
+                                loc.kmlLayer = null;
+                                delete loc.kmlLayer;
                             }
                         });
+                        _presentKMLLayers = _.reject(_presentKMLLayers, function (loc) {
+                            return loc.kmlId >= kmlId && loc.kmlId < maxFile;
+                        });
+                        var idx = _layersClicked.indexOf(kmlId);
+                        if(idx > -1) { 
+                            _layersClicked.splice(idx, 1);
+                        }
                     }
                 }
-                //Other networks
                 else {
-                    //First click
-                    if (!serviceFunctions.layerAdded(kmlId) && !serviceFunctions.hasBeenClicked(kmlId))
-                    {
+                     //First time click
+                    if (!serviceFunctions.hasBeenClicked(kmlId)) {
                         $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
                         serviceFunctions.loadLayer(kmlId);
-                        _layersClickedOnce.push(kmlId);
+                        _layersClicked.push(kmlId)
                     }
-                    //Toggle attributes if not first click
+                    //Click off
                     else {
-                        //Grab the layer, only reverse attributes if layer exists; if not, just toggle the selection in dropdown
-                        var loc = _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId });
-                        if (loc) {
-                            serviceFunctions.toggleAttributes(loc, kmlId);
+                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(188, 189, 192)");
+                        var item = _.find(_presentKMLLayers, function (loc) {
+                            return loc.kmlId === kmlId;
+                        });
+                        if (item) {
+                            item.kmlLayer.setMap(null);
+                            item.kmlLayer = null;
+                            delete item.kmlLayer;
                         }
-                        else {
-                            serviceFunctions.toggleSelected(kmlId);
+                        _presentKMLLayers = _.reject(_presentKMLLayers, function (loc) {
+                            return loc.kmlId === kmlId
+                        });
+                        var idx = _layersClicked.indexOf(kmlId);
+                        if(idx > -1) { 
+                            _layersClicked.splice(idx, 1);
                         }
                     }
-
                 }
-            },
-
-            //Check if the layer has been loaded successfully
-            layerAdded: function(kmlId) {
-                return _.find(_presentKMLLayers, function (layer) { return layer.kmlId === kmlId }) ? true : false;
             },
 
             //Check if the layer is selected in the dropdown
             layerIsSelected: function(kmlId) {
                 //If a US rail, check if 0 is selected
-                if(kmlId > 5 && kmlId < 15){
-                    kmlId = 6;
-                }
-                else if (kmlId < 4){
+                if (kmlId < 4) {
                     kmlId = 0;
                 }
-                return $('#KMLLayerCheckBox'+kmlId).css("color") === "rgb(247, 149, 72)";
-            },
-
-            //Check that at least one layer exists, showing this has been called before
-            usRailsAdded: function() {
-                return _.find(_presentKMLLayers, function (layer) {
-                    return layer.kmlId === 0 || layer.kmlId === 1 || layer.kmlId === 2 || layer.kmlId === 3
-                }) ? true : false;
+                else if(kmlId >= 6 && kmlId <= 14) {
+                    kmlId = 6;
+                }
+                else if(kmlId >= 16 && kmlId <= 17) {
+                    kmlId = 16;
+                }
+                else if(kmlId >= 22 && kmlId <= 25) {
+                    kmlId = 22;
+                }
+                else if(kmlId >= 29 && kmlId <= 30) {
+                    kmlId = 29;
+                }
+                
+                 return _layersClicked.indexOf(kmlId) > -1;
             },
 
             //Check if the layer has been selected at least one time
             hasBeenClicked: function(kmlId) {
-                return _layersClickedOnce.indexOf(kmlId) > -1;
-            },
-
-            //Reverse the current attributes of the layer
-            toggleAttributes: function(loc, kmlId) {
-                $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
-                loc.checked = !loc.checked;
-                loc.checked ? loc.kmlLayer.setMap(map) : loc.kmlLayer.setMap(null);
-            },
-
-            //Reverse the visibility of the check mark on the dropdown, either 'selecting' or 'unselecting' it.
-            toggleSelected: function(kmlId) {
-                $('#KMLLayerCheckBox' + kmlId).css("color", (serviceFunctions.layerIsSelected(kmlId) ? "rgb(188, 189, 192)" : "rgb(247, 149, 72)"));
+                return _layersClicked.indexOf(kmlId) > -1;
             },
 
             clearKmlLayers: function() {
@@ -201,15 +232,18 @@ mod.service('kmlService', [
 
             loadLayer: function(id) {
                 return $.ajax({
-                    url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
+                    //url: "/KMLHandler.ashx?id=" + id + "&username=" + prism.user.userName,
+                    //For testing:
+                    url: "/KMLHandler.ashx?id=" + id + "&username=" + 'vvarallo@navport.com',
                     //data: { "id": id },
                     method: "POST",
                     dataType: "JSON"
                 }).done(function (data) {
                     if (data.success) {
-                        //var longUrl= "http://" + location.host + "/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
+                        //For Testing
+                        var longUrl= "http://qavm.eastus2.cloudapp.azure.com/Explorer/ReturnKmlLayer?token=" + encodeURIComponent(data.token);
                         // Use for the KML in Sisense
-                        var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+                        //var longUrl = "http://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
                         var request = gapi.client.urlshortener.url.insert({
                             'resource': {
                                 'longUrl': longUrl
@@ -225,29 +259,20 @@ mod.service('kmlService', [
                                     preserveViewport: true
                                 });
 
-                                //Error handling
-                                //If fails, just try again, up to 10 times
-                                setTimeout(function () {
-                                    if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {
-                                        var item = {
-                                            kmlLayer: kmlLayer,
-                                            kmlId: id,
-                                            checked: true
-                                        };
-                                        if (!serviceFunctions.layerIsSelected(id)) {
-                                            item.kmlLayer.setMap(null);
-                                            item.checked = false;
-                                        }
-                                        _presentKMLLayers.push(item);
-                                    }
-                                    else {
-                                        if (_layerRetries < 10) {
-                                            console.warn('KML layer not added [' + id + ']. Trying again.');
-                                            serviceFunctions.loadLayer(id);
-                                            _layerRetries += 1;
-                                        }
-                                    }
-                                }, 30000);
+                                var item = {
+                                    kmlLayer: kmlLayer,
+                                    kmlId: id
+                                };
+
+                                if (serviceFunctions.layerIsSelected(id)) {
+                                    _presentKMLLayers.push(item);
+                                    serviceFunctions.checkForLayer(kmlLayer, id, kmlUrl);
+                                }
+                                else { 
+                                    item.kmlLayer.setMap(null);
+                                    delete item.kmlLayer;
+                                    delete item;
+                                }
                             }
                             else {
                                 console.warn('Google API failed.');
@@ -255,27 +280,58 @@ mod.service('kmlService', [
                         });
                     }
                 });
-            }
+            },
 
+            checkForLayer: function(kmlLayer, id, kmlUrl) { 
+                //Error handling
+                //If fails, just try again, up to 10 times
+                var _layerRetries = 0;
+                var interval = setInterval(function () {
+                    if (kmlLayer.getStatus() && kmlLayer.getStatus() === "OK") {     
+                        clearInterval(interval);
+                    }
+                    else {
+                        _layerRetries += 1;
+                        if(_layerRetries < 6) { 
+                            console.warn('KML layer not added [' + id + ']. Retrying.');
+                            kmlLayer = new google.maps.KmlLayer({
+                                        url: kmlUrl,
+                                        map: map,
+                                        preserveViewport: true
+                                    });
+
+                            //Make sure layer is still active
+                            if (serviceFunctions.layerIsSelected(id)) {
+                                var item =_.find(_presentKMLLayers, function(item) { 
+                                        return item.kmlId === id;
+                                    });
+                                if(item) { 
+                                    item.kmlLayer = kmlLayer;
+                                }
+                            }
+                            //If not, delete this and abort the interval
+                            else { 
+                                delete kmlLayer;
+                                _presentKMLLayers =_.reject(_presentKMLLayers, function(item) { 
+                                    return item.kmlId === id;
+                                });
+                                clearInterval(interval);
+                            }
+                        }
+                        //If max number of retries are reached
+                        else { 
+                            console.warn('KML layer not added [' + id + ']. Retries failed as well.');
+                            _presentKMLLayers =_.reject(_presentKMLLayers, function(item) { 
+                                return item.kmlId === id;
+                            });
+                            clearInterval(interval);
+                        }
+                    }
+                }, 5000);
+            }
         }
 
         return serviceFunctions;
 
     }
 ]);
-										
-
-										
-
-										
-
-										
-
-										
-										
-
-										
-
-										
-
-										
