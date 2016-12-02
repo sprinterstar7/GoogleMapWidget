@@ -502,11 +502,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											};
 										}
 
-										var myOptions = {
-											mapTypeId : google.maps.MapTypeId.ROADMAP,
-											zoom: e.widget.mapSettings.zoomLevel,
-											center: { lat: e.widget.mapSettings.center.lat, lng: e.widget.mapSettings.center.lng },
-											styles: [
+										var darkThemeType = new google.maps.StyledMapType(
+											 [
 												{
 													"featureType": "landscape",
 													"stylers": [
@@ -582,12 +579,104 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 														{ "color": "#141414" }
 													]
 												}
-											]
+											],
+											{name: 'Dark'}
+										);
+
+										var lightThemeType = new google.maps.StyledMapType(
+											[
+												{
+													"featureType": "landscape",
+													"stylers": [
+													{ "color": "#FEFEFE" },
+													{ "hue": "#00ff88" },
+													{ "visibility": "simplified" }
+													]
+												}, {
+													"featureType": "water",
+													"stylers": [
+													{ "visibility": "on" }
+													]
+												}, {
+													"featureType": "administrative.locality",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "administrative.neighborhood",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "administrative.land_parcel",
+													"stylers": [
+													{ "visibility": "on" }
+													]
+												}, {
+													"featureType": "poi",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "road.highway",
+													"stylers": [
+													{ "visibility": "simplified" },
+													{ "lightness": -20 }
+													]
+												}, {
+													"featureType": "road.arterial",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "road.local",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "transit",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "road.highway",
+													"elementType": "labels.icon",
+													"stylers": [
+													{ "visibility": "off" }
+													]
+												}, {
+													"featureType": "administrative.country",
+													"elementType": "labels.text.fill",
+													"stylers": [
+													{ "color": "#000000" }
+													]
+												}, {
+													"featureType": "administrative",
+													"elementType": "geometry.fill",
+													"stylers": [
+													{ "color": "#FEFEFE" }
+													]
+												}
+											],
+											{ name: 'Light' }
+										);
+
+
+										var myOptions = {
+											//mapTypeId : google.maps.MapTypeId.DARK,
+											zoom: e.widget.mapSettings.zoomLevel,
+											center: { lat: e.widget.mapSettings.center.lat, lng: e.widget.mapSettings.center.lng },
+											mapTypeControlOptions: {
+												mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain', 'dark', 'light']
+											}
 										};
 										var widgetMap = getWidgetMap(e.widget.oid);
 
 										if (!widgetMap) { // Initialize initial map controls
 											widgetMap = new google.maps.Map($lmnt[0], myOptions); // element is jquery element but we need dom element as map container hence the accessor
+											widgetMap.mapTypes.set('dark', darkThemeType);
+											widgetMap.mapTypes.set('light', lightThemeType);
+											widgetMap.setMapTypeId('light');
 											setWidgetMap(e.widget.oid,widgetMap);
 											
 											/*
@@ -601,8 +690,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											$kmlService.init(widgetMap, google);
 											$countyService.init(widgetMap, google);
 											$drawingService.init(widgetMap, google, e);
-																					
-											
+
 											google.maps.event.addListenerOnce(widgetMap, 'idle', function () { // Create Widget's Refresh button
 
 												if ($('#mapRefresh').length < 1) {
@@ -777,7 +865,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										
 										if(!s.fromReadjust) { 
 											map.clearMarkers();
-
+											
 											//	Create each marker for the map
 											for (; i < dataSize; i++) {
 
