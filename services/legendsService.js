@@ -47,26 +47,37 @@ mod.service('legendsService', [
                 $('#mapSidebar').css('top', 0);
                 $('#mapSidebar').hide();
 
-                $(map.getDiv()).append($('<div id="mapSidebarShow"><i class="fa fa-caret-right"></i></div>'));
+                $(map.getDiv()).append($('<div id="mapSidebarShow" title="Map settings and legends"><i class="fa fa-caret-right"></i></div>'));
 
                 $('#mapSidebarContent').height($(map.getDiv()).height());
                 $('#mapSidebarContent').append($('<div id="mapSidebarHeader">'
                     + '<span class="active" id="colorLegend">Color Legend</span>'
-                    + '<span class="tabDivider"></span>'
+                    //+ '<span class="tabDivider"></span>'
                     + '<span class="inactive" id="shapeLegend">Shape by</span>'
                     + '</div>'));
                 $('#mapSidebarContent').append($('<div id="mapColorLegendContent"></div>'));
                 $('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
+                $('#mapSidebarContent').append($('<div id="mapOptionsLegendContent"></div>'));
+                //$('#mapSidebarContent').append($('<div id="mapMiscLegendContent"></div>'));
+                $('#mapSidebarContent').append($('<div id="mapSidebarFooter">'
+                    + '<span class="inactive" id="optionsLegend">Options</span>'
+                    //+ '<span class="tabDivider"></span>'
+                    //+ '<span class="inactive" id="miscLegend">To be Det.</span>'
+                    + '</div>'));
 
                 $('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody><tr><th colspan="2">' 
                     + (colorCategory ? colorCategory : "No Results") + '</th></tr></tbody></table>'));
                 $('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th colspan="2">'
                     + (shapeCategory ? shapeCategory : "No Results") + '</th></tr></tbody></table>'));
 
-                $('#mapColorLegendContent').height($(map.getDiv()).height() - 70);
-                $('#mapShapeLegendContent').height($(map.getDiv()).height() - 70);
+                $('#mapColorLegendContent').height($(map.getDiv()).height() - 120);
+                $('#mapShapeLegendContent').height($(map.getDiv()).height() - 120);
+                $('#mapOptionsLegendContent').height($(map.getDiv()).height() - 120);
+                //$('#mapMiscLegendContent').height($(map.getDiv()).height() - 120);
 
                 $('#mapShapeLegendContent').hide();
+                $('#mapOptionsLegendContent').hide();
+                $('#mapMiscLegendContent').hide();
 
                 $('#mapSidebarHide').click(function () {
                     $('#mapSidebar').hide("slide", { direction: "left" }, 200);
@@ -81,16 +92,48 @@ mod.service('legendsService', [
                 $('#colorLegend').click(function () {
                     $('#colorLegend').addClass('active').removeClass('inactive');
                     $('#shapeLegend').addClass('inactive').removeClass('active');
+                    $('#optionsLegend').addClass('inactive').removeClass('active');
+                    //$('#miscLegend').addClass('inactive').removeClass('active');
                     $('#mapShapeLegendContent').hide();
+                    $('#mapOptionsLegendContent').hide();
+                    //$('#mapMiscLegendContent').hide();
                     $('#mapColorLegendContent').show();
                 });
 
                 $('#shapeLegend').click(function () {
                     $('#shapeLegend').addClass('active').removeClass('inactive');
                     $('#colorLegend').addClass('inactive').removeClass('active');
+                    $('#optionsLegend').addClass('inactive').removeClass('active');
+                   // $('#miscLegend').addClass('inactive').removeClass('active');
                     $('#mapColorLegendContent').hide();
+                    $('#mapOptionsLegendContent').hide();
+                    //$('#mapMiscLegendContent').hide();
                     $('#mapShapeLegendContent').show();
                 });
+
+                $('#optionsLegend').click(function () {
+                    $('#optionsLegend').addClass('active').removeClass('inactive');
+                    $('#shapeLegend').addClass('inactive').removeClass('active');
+                    $('#colorLegend').addClass('inactive').removeClass('active');
+                    //$('#miscLegend').addClass('inactive').removeClass('active');
+                    $('#mapColorLegendContent').hide();
+                    $('#mapShapeLegendContent').hide();
+                    //$('#mapMiscLegendContent').hide();
+                    $('#mapOptionsLegendContent').show();
+                });
+
+                // $('#miscLegend').click(function () {
+                //     $('#miscLegend').addClass('active').removeClass('inactive');
+                //     $('#shapeLegend').addClass('inactive').removeClass('active');
+                //     $('#colorLegend').addClass('inactive').removeClass('active');
+                //     $('#optionsLegend').addClass('inactive').removeClass('active');
+                //     $('#mapColorLegendContent').hide();
+                //     $('#mapShapeLegendContent').hide();
+                //     $('#mapOptionsLegendContent').hide();
+                //     $('#mapMiscLegendContent').show();
+                // });
+
+                serviceFunctions.addOptions();
         
                 //Map Side Bar End
             },
@@ -226,6 +269,29 @@ mod.service('legendsService', [
 
             getRandomShape: function() { 
                 return availableShapes[_.random((availableShapes.length - 1))];
+            },
+
+            addOptions: function() { 
+                 $('#mapOptionsLegendContent').append($('<div id="optionsHeader">Options</div>'));
+                 $('#mapOptionsLegendContent').append($('<div id="drawingOptionsHeader">Drawing Options</div>'));
+
+                var rulerOptions = $('<div id="uomDiv"><span>Ruler Units:</span><select id="rulerOptions">' +
+                    '<option value="0.3048">Feet</option>' +
+                    '<option value="1000">Kilometers</option>' +
+                    '<option value="1">Meters</option>' +
+                    '<option value="1609.347087886444" selected="selected">Miles</option>' +
+                '</select></div>');
+
+                 $('#mapOptionsLegendContent').append(rulerOptions);
+
+                 $('#mapOptionsLegendContent').append($('<div id="heatmapOptionsHeader">Heatmap Options</div>'));
+
+                 var heatMapInputOne = $('<div id="heatMapRadius"><span>Radius:</span><input id="radiusInput" type="number" name="radius" min="1" max="50" value="15"></div>');
+                 var heatMapInputTwo = $('<div id="heatMapIntensity"><span>Intesity:</span>' + 
+                    '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="0"></div>');
+
+                 $('#mapOptionsLegendContent').append(heatMapInputOne);
+                 $('#mapOptionsLegendContent').append(heatMapInputTwo);
             },
 
             clear: function(inColorCategory, inShapeCategory) {

@@ -124,20 +124,26 @@
     width: 300px;
     background: rgb(252, 156, 70);
     color: rgb(255, 255, 255);
-    font-size: 20px;
+    font-size: 16px;
     text-align: center;
 }
 
-#mapSidebarHeader span{
+#mapSidebarHeader span {
+    width: 130px;
     display: inline-block;
     margin-left: 10px;
     margin-right: 10px;
     height: 40px;
     margin-top: 10px;
-    padding: 5px;
+    padding-top: 10px;
     padding-left: 10px;
     padding-right: 10px;
     cursor: pointer;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    border-top: 1px solid rgb(216, 130, 60);
+    border-left: 1px solid rgb(216, 130, 60);
+    border-right: 1px solid rgb(216, 130, 60);
 }
 
 #mapSidebarHeader .active {
@@ -149,7 +155,7 @@
 
 }
 
-#mapSidebarHeader .tabDivider {
+/*#mapSidebarHeader .tabDivider {
     position: relative;
     width: 1px;
     max-width: 1px;
@@ -158,9 +164,55 @@
     top: 14px;
     padding: 0px;
     background-color: rgb(216, 130, 60);
+}*/
+
+#mapSidebarFooter {
+    height: 50px;
+    width: 300px;
+    background: rgb(252, 156, 70);
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+    /*Comment back in when there are two panes */
+    /*text-align: center;*/
 }
 
-#mapShapeLegendContent , #mapColorLegendContent { 
+#mapSidebarFooter span {
+    width: 130px;
+    display: inline-block;
+    margin-left: 10px;
+    margin-right: 10px;
+    height: 39px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgb(216, 130, 60);
+    border-left: 1px solid rgb(216, 130, 60);
+    border-right: 1px solid rgb(216, 130, 60);
+    /* Comment out when there are two panes on the footer: */
+    text-align: center;
+}
+
+#mapSidebarFooter .active {
+    background-color: rgb(216, 130, 60);
+    font-weight: bold;
+}
+
+#mapSidebarFooter .inactive {
+
+}
+
+/*#mapSidebarFooter .tabDivider {
+    position: relative;
+    width: 1px;
+    max-width: 1px;
+    height: 36px;
+    margin: 0px;
+    padding: 0px;
+    background-color: rgb(216, 130, 60);
+}*/
+
+#mapShapeLegendContent , #mapColorLegendContent,  #mapOptionsLegendContent, #mapMiscLegendContent { 
     margin: 10px;
     overflow-y: auto;
     color: white;
@@ -362,5 +414,66 @@
 
 #mapErrorDivContent {
     margin: 5px;
+    font-size: 16px;
+}
+
+/* Options content */
+
+#optionsHeader {
+    text-align: left;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 5px;
+    border-bottom: 1px solid rgb(128, 129, 133);
+}
+
+#drawingOptionsHeader, #heatmapOptionsHeader {
+    text-align: left;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 5px;
+}
+
+#uomDiv { 
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    font-size: 16px;
+    border-bottom: 1px solid rgb(128, 129, 133);
+}
+
+#rulerOptions {
+    margin-left: 5px;
+    width: 150px;
+    height: 20px;
+    font-size: 16px;
+}
+
+#heatMapRadius { 
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    font-size: 16px;
+}
+
+#heatMapIntensity { 
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    font-size: 16px;
+    border-bottom: 1px solid rgb(128, 129, 133);
+}
+
+#radiusInput { 
+    margin-left: 5px;
+    width: 50px;
+    height: 20px;
+    font-size: 16px;
+}
+
+#intensityInput { 
+    margin-left: 5px;
+    width: 100px;
+    height: 20px;
     font-size: 16px;
 }
