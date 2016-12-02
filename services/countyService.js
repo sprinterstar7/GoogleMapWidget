@@ -37,7 +37,7 @@ mod.service('countyService', [
                             polygonOptions: {
                                 fillColor: '#0000FF',
                                 fillOpacity: 0.01,
-                                strokeColor: '#FFFFFF'
+                                strokeColor: '#fc9c46'
                             }
                         }]
                     });
