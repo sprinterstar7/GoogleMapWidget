@@ -27,8 +27,8 @@ mod.service('drawingService', [
                         position: google.maps.ControlPosition.TOP_CENTER,
                         drawingModes: [
                             google.maps.drawing.OverlayType.CIRCLE,
-                            google.maps.drawing.OverlayType.RECTANGLE/*,
-                            google.maps.drawing.OverlayType.POLYLINE*/
+                            google.maps.drawing.OverlayType.RECTANGLE,
+                            google.maps.drawing.OverlayType.POLYLINE
                         ]
                     },
                     circleOptions: {
@@ -113,6 +113,29 @@ mod.service('drawingService', [
 
                         overlays.push(overlay);
                         e.widget.queryMetadata.overlays = overlays;
+                    }
+                    else if(event.type == google.maps.drawing.OverlayType.POLYLINE) {   
+                        event.overlay.distance = google.maps.geometry.spherical.computeLength(event.overlay.getPath().getArray());
+
+                        event.overlay.addListener('click', function () {           
+                            if(event.overlay.infoWindow){
+                                event.overlay.infoWindow.close();
+                                event.overlay.infoWindow = null;
+                            }   
+                            else {      
+                                var selectedUnits = $("#rulerOptions").val();
+                                var uom = $("#rulerOptions option[value='"+selectedUnits+"']").text();
+                                var distance = (event.overlay.distance / selectedUnits);
+                                var infoWindowContent = '<div class="rulerDistance"><span data-distance="'+event.overlay.distance+'">'+ 'Distance: ' + Math.trunc(distance) + " " + uom;+'</span><\/div>';
+                                var infoWindowOptions = {
+                                    content: infoWindowContent
+                                };
+                                event.overlay.infoWindow = new google.maps.InfoWindow(infoWindowOptions);
+                                event.overlay.infoWindow.open(map, event.overlay);
+                                event.overlay.infoWindow.setPosition(event.overlay.latLngs.b[0].b[0]);
+                            }
+                        });
+                        
                     }
 
                     if (shoulsUpdatefilters){
