@@ -187,8 +187,10 @@ mod.service('legendsService', [
                             url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + marker.color.replace('#', ''),
                             anchor: new google.maps.Point(10, 10)
                         };
-                        marker.marker.setMap(null);
-                        marker.marker.setMap(map);
+                        if ( marker.marker.getMap() ) {
+                            marker.marker.setMap(null);
+                            marker.marker.setMap(map);
+                        }
                     }
                 });
                 $('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '/plugins/googleMapsWidget/resources/shapes/'+shape+'.png');
