@@ -284,6 +284,17 @@ mod.service('legendsService', [
 
                  $('#mapOptionsLegendContent').append(rulerOptions);
 
+                 $('#rulerOptions').change(function() {
+                     var value = $(this).val();
+                     var uom = $("#rulerOptions option[value='"+value+"']").text();
+                     $('.rulerDistance').each(function() {
+                         var span = $(this).children()[0];
+                         var distance = $(span).data('distance')
+                         var calc = distance / value;
+                         $(span).text('Distance: ' + Math.trunc(calc) + " " + uom);
+                     });
+                 });
+
                  $('#mapOptionsLegendContent').append($('<div id="heatmapOptionsHeader">Heatmap Options</div>'));
 
                  var heatMapInputOne = $('<div id="heatMapRadius"><span>Radius:</span><input id="radiusInput" type="number" name="radius" min="1" max="50" value="15"></div>');
