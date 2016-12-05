@@ -26,17 +26,18 @@ mod.service('legendsService', [
                                 ,'bar-vertical'
                              ];
 
-        var open,  colorCategory, shapeCategory, shapesMetadata, map, shapeArray, e, markers;
+        var open,  colorCategory, shapeCategory, shapesMetadata, map, shapeArray, e, markers, $heatmapService;
 
         var serviceFunctions =  { 
 
-            init: function(inColorCategory, inShapeCategory, inShapesMetadata, inMap, inE, inMarkers) { 
+            init: function(inColorCategory, inShapeCategory, inShapesMetadata, inMap, inE, inMarkers, inheatmapService) { 
                 colorCategory = inColorCategory;
                 shapeCategory = inShapeCategory;
                 shapesMetadata = inShapesMetadata;
                 map = inMap;
                 e = inE;
                 markers = inMarkers;
+                $heatmapService = inheatmapService;
                 //Map Side Bar Begin
 
                 $(map.getDiv()).append($('<div id="mapSidebar">'
@@ -84,7 +85,6 @@ mod.service('legendsService', [
                      open = null;
                     $('#mapSidebar').hide("slide", { direction: "left" }, 200);
                     $("#mapSidebarShow").show();
-                    
                 });
 
                 $('#mapSidebarShow').click(function () {
@@ -296,7 +296,7 @@ mod.service('legendsService', [
                          $(span).text('Distance: ' + Math.trunc(calc) + " " + uom);
                      });
                  });
-
+                 
                  $('#mapOptionsLegendContent').append($(
                  '<div id="heatmapToggleHeader">Heatmap'
                     + '<div class="onoffswitch">'
@@ -332,6 +332,13 @@ mod.service('legendsService', [
                         $('#heatmapToggleHeader').css('border-bottom', '1px solid rgb(128, 129, 133)');
                      }
                 })
+
+                $('#radiusInput').on('change', function(){
+                    $heatmapService.setRadius();
+                 });
+                 $('#intensityInput').on('change', function(){
+                    $heatmapService.setIntensity();
+                 });
             },
 
             clear: function(inColorCategory, inShapeCategory) {
