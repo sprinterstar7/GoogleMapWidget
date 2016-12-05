@@ -17,6 +17,9 @@
 
 /*KML Button Changes*/
 
+#KMLLayerButtonGroup ul li a .fa-check {
+    visibility: hidden;
+}
 
 #KMLLayerButtonGroup ul {
     list-style: none;
@@ -29,17 +32,17 @@
     padding: 3px;
     padding-right: 10px;
     padding-left: 15px;
-    background: rgb(128, 130, 133);
+    background: rgb(255, 255, 255);
     text-align: center;
 }
 
 #KMLLayerButtonGroup ul li a {
-    color:  rgb(188, 189, 192);
+    color: rgb(100, 100, 100);
     text-decoration: none;
 }
 
 #KMLLayerButtonGroup ul li a:hover {
-    color: rgb(255, 255, 255);
+    color: rgb(0,0,0);
     transition: .25s;
     text-decoration: none;
     cursor: pointer;
@@ -50,12 +53,12 @@
     padding: 2px;
     padding-top: 5px;
     background: rgb(128, 130, 133);
-    color:  rgb(188, 189, 192);
+    color:   rgb(100, 100, 100);
     text-align: center;
 }
 
 #KMLLayerButtonGroupHide:hover {
-    color: rgb(255, 255, 255);
+    color: rgb(0,0,0);
     transition: .25s;
     cursor: pointer;
 }
@@ -89,13 +92,13 @@
     height: 50px;
     left: 0px;
     top: 50px;
-    background: rgb(182, 184, 186);
-    color: #888;
+    background: lightgrey;
+    color: rgb(100, 100, 100);
     cursor: pointer;
 }
 
 #mapSidebarHide:hover, #mapSidebarShow:hover {
-    color: rgb(255, 255, 255);
+    color: rgb(0,0,0);
     transition: .25s;
 }
 
@@ -114,7 +117,7 @@
 
 #mapSidebarContent {
     width: 300px;
-    background:rgb(128, 129, 133);
+    background:lightgrey;
     -webkit-box-shadow: 10px 0 5px -2px #111;
         box-shadow: 10px 0 5px -2px #111;
 }
@@ -122,9 +125,9 @@
 #mapSidebarHeader{
     height: 50px;
     width: 300px;
-    background: rgb(252, 156, 70);
+    background: rgb(0, 160, 220);
     color: rgb(255, 255, 255);
-    font-size: 16px;
+    font-size: 14px;
     text-align: center;
 }
 
@@ -141,13 +144,17 @@
     cursor: pointer;
     padding-bottom: 0px;
     margin-bottom: 0px;
-    border-top: 1px solid rgb(216, 130, 60);
-    border-left: 1px solid rgb(216, 130, 60);
-    border-right: 1px solid rgb(216, 130, 60);
+    border-top: 1px solid  rgb(0, 117, 160);
+    border-left: 1px solid  rgb(0, 117, 160);
+    border-right: 1px solid  rgb(0, 117, 160);
+}
+
+#mapSidebarHeader span i {
+    margin-right: 2px;
 }
 
 #mapSidebarHeader .active {
-    background-color: rgb(216, 130, 60);
+    background-color: rgb(0, 117, 160);
     font-weight: bold;
 }
 
@@ -169,9 +176,9 @@
 #mapSidebarFooter {
     height: 50px;
     width: 300px;
-    background: rgb(252, 156, 70);
+    background: rgb(0, 160, 220);
     color: rgb(255, 255, 255);
-    font-size: 16px;
+    font-size: 14px;
     /*Comment back in when there are two panes */
     /*text-align: center;*/
 }
@@ -186,15 +193,19 @@
     padding-left: 10px;
     padding-right: 10px;
     cursor: pointer;
-    border-bottom: 1px solid rgb(216, 130, 60);
-    border-left: 1px solid rgb(216, 130, 60);
-    border-right: 1px solid rgb(216, 130, 60);
+    border-bottom: 1px solid  rgb(0, 117, 160);
+    border-left: 1px solid  rgb(0, 117, 160);
+    border-right: 1px solid  rgb(0, 117, 160);
     /* Comment out when there are two panes on the footer: */
     text-align: center;
 }
 
+#mapSidebarFooter span i {
+    margin-right: 2px;
+}
+
 #mapSidebarFooter .active {
-    background-color: rgb(216, 130, 60);
+    background-color: rgb(0, 117, 160);
     font-weight: bold;
 }
 
@@ -215,8 +226,8 @@
 #mapShapeLegendContent , #mapColorLegendContent,  #mapOptionsLegendContent, #mapMiscLegendContent { 
     margin: 10px;
     overflow-y: auto;
-    color: white;
-    background: rgb(152, 154, 156);
+    color: black;
+    background: rgb(255, 255, 255);
     font-size: 16px;
 }
 
@@ -268,7 +279,7 @@
     position: absolute;
     left: 300px;
     width: 250px;
-    background: rgb(128, 129, 133);
+    background: lightgrey;
     z-index: 1000;  
     max-height: 200px;
     overflow-y: auto;
@@ -283,7 +294,7 @@
 }
 
 .shapeSelectionRow:hover{
-    background: lightgrey;
+    background: rgb(128, 130, 133);
     transition: .25s;
 }
 

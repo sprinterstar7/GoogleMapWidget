@@ -115,7 +115,7 @@ mod.service('kmlService', [
                     li.className = "kmlItem"
                     li.style.display = "none";
                     var a = document.createElement('a');
-                    a.id = "KMLLayerCheckBox" + layer.id;
+                    //a.id = "KMLLayerCheckBox" + layer.id;
 
                     // Setup the click event listeners: simply set the map to Chicago.
                     a.addEventListener('click', function () {
@@ -138,7 +138,7 @@ mod.service('kmlService', [
                         }
                     });
 
-                    a.innerHTML = layer.title;
+                    a.innerHTML = '<i class="fa fa-check" id="KMLLayerCheckBox'+layer.id+'" aria-hidden="true"></i>' + layer.title
                     li.appendChild(a);
                     ul.appendChild(li);
 
@@ -153,7 +153,7 @@ mod.service('kmlService', [
                     //First time click
                     var maxFile = kmlId + nof;
                     if (!serviceFunctions.hasBeenClicked(kmlId)) {
-                        $('#KMLLayerCheckBox'+kmlId).css("color", "rgb(247, 149, 72)");
+                        $('#KMLLayerCheckBox' + kmlId).css("visibility", "visible");
                         for (var i = kmlId; i < maxFile; i++) {
                             serviceFunctions.loadLayer(i);
                         }
@@ -161,7 +161,7 @@ mod.service('kmlService', [
                     }
                     //Toggle attributes if not first click
                     else {
-                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(188, 189, 192)");
+                       $('#KMLLayerCheckBox' + kmlId).css("visibility", "hidden");
                             _.each(_presentKMLLayers, function (loc) {
                             if (loc.kmlId >= kmlId && loc.kmlId < maxFile) {
                                 loc.kmlLayer.setMap(null);
@@ -181,13 +181,13 @@ mod.service('kmlService', [
                 else {
                      //First time click
                     if (!serviceFunctions.hasBeenClicked(kmlId)) {
-                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(247, 149, 72)");
+                        $('#KMLLayerCheckBox' + kmlId).css("visibility", "visible");
                         serviceFunctions.loadLayer(kmlId);
                         _layersClicked.push(kmlId)
                     }
                     //Click off
                     else {
-                        $('#KMLLayerCheckBox' + kmlId).css("color", "rgb(188, 189, 192)");
+                        $('#KMLLayerCheckBox' + kmlId).css("visibility", "hidden");
                         var item = _.find(_presentKMLLayers, function (loc) {
                             return loc.kmlId === kmlId;
                         });
