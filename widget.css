@@ -118,8 +118,8 @@
 #mapSidebarContent {
     width: 300px;
     background:lightgrey;
-    -webkit-box-shadow: 10px 0 5px -2px #111;
-        box-shadow: 10px 0 5px -2px #111;
+    -webkit-box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
 }
 
 #mapSidebarHeader{
@@ -438,11 +438,20 @@
     border-bottom: 1px solid rgb(128, 129, 133);
 }
 
-#drawingOptionsHeader, #heatmapOptionsHeader {
+#drawingOptionsHeader,  #heatmapToggleHeader {
     text-align: left;
     font-size: 16px;
     font-weight: bold;
     padding: 5px;
+}
+
+
+
+#heatmapOptionsHeader { 
+    text-align: left;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 5px 5px 5px;
 }
 
 #uomDiv { 
@@ -488,3 +497,42 @@
     height: 20px;
     font-size: 16px;
 }
+
+/* Slider from https://proto.io/freebies/onoff/ */
+
+.onoffswitch {
+    position: relative; 
+    width: 40px;
+    left: 230px;
+    top: -17px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    display: none;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    height: 15px; padding: 0; line-height: 15px;
+    border: 2px solid #999999; border-radius: 15px;
+    background-color: #EEEEEE;
+    transition: background-color 0.3s ease-in;
+}
+.onoffswitch-label:before {
+    content: "";
+    display: block; width: 15px; margin: 0px;
+    background: #FFFFFF;
+    position: absolute; top: 0; bottom: 0;
+    right: 23px;
+    border: 2px solid #999999; border-radius: 15px;
+    transition: all 0.3s ease-in 0s; 
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label {
+    background-color: #00A0DC;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label, .onoffswitch-checkbox:checked + .onoffswitch-label:before {
+   border-color: #00A0DC;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label:before {
+    right: 0px; 
+}
+/* End slider */
