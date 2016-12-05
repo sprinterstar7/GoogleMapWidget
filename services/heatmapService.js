@@ -21,7 +21,8 @@ mod.service('heatmapService', [
                 if (!e.widget.queryMetadata.heatmapSettings) {
                     e.widget.queryMetadata.heatmapSettings = {
                         "radius": 15,
-                        "maxIntensity": 0
+                        "maxIntensity": 0,
+                        "toggled" : false
                     };
                     e.widget.changesMade();
                 }
@@ -40,7 +41,7 @@ mod.service('heatmapService', [
                         'rgba(255, 74, 0, 1)',
                         'rgba(255, 0, 0, 1)'
                     ],
-                    map: map
+                    map:  e.widget.queryMetadata.heatmapSettings.toggled ? map : null
                 });
 
                 
@@ -92,6 +93,14 @@ mod.service('heatmapService', [
 
             getIntensity: function () {
                 return _heatMap.get("maxIntensity");
+            },
+
+            getHeatmap: function() { 
+                return _heatMap;
+            },
+
+            isToggled: function() { 
+                return _heatMap.map ? true : false;
             }
         }
 

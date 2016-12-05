@@ -958,7 +958,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 												// Create the marker
 												var marker = new google.maps.Marker({
-													//map : map,
+													map : $heatmapService.isToggled() ? null : map,
 													position : new google.maps.LatLng(lat, lng),
 													raiseOnDrag : false,
 													visible : true,
@@ -1013,7 +1013,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											}
 											//END for
 											map.markers = markers;
-											$heatmapService.apply(maxValue);
+											if($heatmapService.isToggled()) { 	
+												console.log('applied');
+												$heatmapService.apply(maxValue);
+											}
 											
 											$staticOverlayService.removeOverlay();
 										}

@@ -275,17 +275,18 @@ mod.service('legendsService', [
             },
 
             addOptions: function() { 
+                var _heatMap = $heatmapService.getHeatmap();
+
                  $('#mapOptionsLegendContent').append($('<div id="optionsHeader">Options</div>'));
-                 $('#mapOptionsLegendContent').append($('<div id="drawingOptionsHeader">Drawing Options</div>'));
-
-                var rulerOptions = $('<div id="uomDiv"><span>Ruler Units:</span><select id="rulerOptions">' +
-                    '<option value="0.3048">Feet</option>' +
-                    '<option value="1000">Kilometers</option>' +
-                    '<option value="1">Meters</option>' +
-                    '<option value="1609.347087886444" selected="selected">Miles</option>' +
-                '</select></div>');
-
-                 $('#mapOptionsLegendContent').append(rulerOptions);
+                 $('#mapOptionsLegendContent').append($('<div id="drawingOptions">'
+                 + '<div id="drawingOptionsHeader">Drawing Options</div>'
+                    + '<div id="uomDiv"><span>Ruler Units:</span><select id="rulerOptions">' +
+                        '<option value="0.3048">Feet</option>' +
+                        '<option value="1000">Kilometers</option>' +
+                        '<option value="1">Meters</option>' +
+                        '<option value="1609.347087886444" selected="selected">Miles</option>' +
+                    '</select></div>'
+                + '</div>'));
 
                  $('#rulerOptions').change(function() {
                      var value = $(this).val();
@@ -297,19 +298,57 @@ mod.service('legendsService', [
                          $(span).text('Distance: ' + Math.trunc(calc) + " " + uom);
                      });
                  });
+                 
+                 $('#mapOptionsLegendContent').append($(
+                 '<div id="heatmapToggleHeader">Heatmap'
+                    + '<div class="onoffswitch">'
+                        + '<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="heatmapToggle" ' + ($heatmapService.isToggled() ? 'checked' : '') + '>'
+                        + '<label id="heatmapToggle" class="onoffswitch-label" for="heatmapToggle">'
+                            + '<span class="onoffswitch-inner"></span>'
+                            + '<span class="onoffswitch-switch"></span>'
+                        + '</label>'
+                    + '</div>'
+                 + '</div>'));
 
-                 $('#mapOptionsLegendContent').append($('<div id="heatmapOptionsHeader">Heatmap Options</div>'));
+                 $('#mapOptionsLegendContent').append($('<div id="heatmapOptions">'
+                 + '<div id="heatmapOptionsHeader">Heatmap Options</div>'
+                    + '<div id="heatMapRadius">'
+                        + '<span>Radius:</span>'
+                        + '<input id="radiusInput" type="number" name="radius" min="1" max="50" value="'+ $heatmapService.getRadius() + '">'
+                    + '</div>'
+                    + '<div id="heatMapIntensity">'
+                        + '<span>Intesity:</span>'
+                        + '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="' + $heatmapService.getIntensity() + '">'
+                    + '</div>'
+                + '</div>'));
 
-                 var heatMapInputOne = $('<div id="heatMapRadius"><span>Radius:</span>' +
-                    '<input id="radiusInput" type="number" name="radius" min="1" max="50" value="' + $heatmapService.getRadius() + '"></div>');
-                 var i = $heatmapService.getIntensity() == null ? 0 : $heatmapService.getIntensity();
-                 var heatMapInputTwo = $('<div id="heatMapIntensity"><span>Intesity:</span>' + 
-                    '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="' + i + '"></div>');
+                if(!$heatmapService.isToggled()) { 
+                    $('#heatmapOptions').hide();
+                    $('#heatmapToggleHeader').css('border-bottom', '1px solid rgb(128, 129, 133)');
+                }
+                
+                $('#heatmapToggle').on('change', function(){
+                     if($(this).is(':checked')){
+                        $('#heatmapOptions').show();
+                        $('#heatmapToggleHeader').css('border-bottom', '');
+                        _.each(markers, function(marker){
+                            marker.marker.setMap(null);
+                        });
+                        _heatMap.setMap(map);
+                        e.widget.queryMetadata.heatmapSettings.toggled = true;
+                     } else {
+                        $('#heatmapOptions').hide();
+                        $('#heatmapToggleHeader').css('border-bottom', '1px solid rgb(128, 129, 133)');
+                         _heatMap.setMap(null);
+                         _.each(markers, function(marker){
+                            marker.marker.setMap(map);
+                            e.widget.queryMetadata.heatmapSettings.toggled = false;
+                        });
+                     }
+                     e.widget.changesMade();
+                })
 
-                 $('#mapOptionsLegendContent').append(heatMapInputOne);
-                 $('#mapOptionsLegendContent').append(heatMapInputTwo);
-
-                 $('#radiusInput').on('change', function(){
+                $('#radiusInput').on('change', function(){
                     $heatmapService.setRadius();
                  });
                  $('#intensityInput').on('change', function(){
