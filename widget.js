@@ -870,6 +870,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										
 										if(!s.fromReadjust) { 
 											map.clearMarkers();
+											markers = [];
 											$heatmapService.clear();
 											var maxValue = 0;
 											//	Create each marker for the map
@@ -1013,6 +1014,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											}
 											//END for
 											map.markers = markers;
+
 											if($heatmapService.isToggled()) { 	
 												console.log('applied');
 												$heatmapService.apply(maxValue);
@@ -1035,8 +1037,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 						
 										if ($('#mapSidebar').length < 1) 
 											$legendsService.init((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory, shapesMetadata, map, e, markers, $heatmapService);
-										else
+										else { 
 											$legendsService.clear((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory)
+											$legendsService.setMarkers(markers);
+										}
 
 										if(shapeArray) {
 											$legendsService.addRowsToShapeBy(shapeArray);
