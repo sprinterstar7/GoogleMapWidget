@@ -275,6 +275,8 @@ mod.service('legendsService', [
             },
 
             addOptions: function() { 
+                var _heatMap = $heatmapService.getHeatmap();
+
                  $('#mapOptionsLegendContent').append($('<div id="optionsHeader">Options</div>'));
                  $('#mapOptionsLegendContent').append($('<div id="drawingOptions">'
                  + '<div id="drawingOptionsHeader">Drawing Options</div>'
@@ -300,7 +302,7 @@ mod.service('legendsService', [
                  $('#mapOptionsLegendContent').append($(
                  '<div id="heatmapToggleHeader">Heatmap'
                     + '<div class="onoffswitch">'
-                        + '<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="heatmapToggle">'
+                        + '<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="heatmapToggle" ' + ($heatmapService.isToggled() ? 'checked' : '') + '>'
                         + '<label id="heatmapToggle" class="onoffswitch-label" for="heatmapToggle">'
                             + '<span class="onoffswitch-inner"></span>'
                             + '<span class="onoffswitch-switch"></span>'
@@ -312,25 +314,38 @@ mod.service('legendsService', [
                  + '<div id="heatmapOptionsHeader">Heatmap Options</div>'
                     + '<div id="heatMapRadius">'
                         + '<span>Radius:</span>'
-                        + '<input id="radiusInput" type="number" name="radius" min="1" max="50" value="15">'
+                        + '<input id="radiusInput" type="number" name="radius" min="1" max="50" value="'+ $heatmapService.getRadius() + '">'
                     + '</div>'
                     + '<div id="heatMapIntensity">'
                         + '<span>Intesity:</span>'
-                        + '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="0">'
+                        + '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="' + $heatmapService.getIntensity() + '">'
                     + '</div>'
                 + '</div>'));
 
-                $('#heatmapOptions').hide();
-                $('#heatmapToggleHeader').css('border-bottom', '1px solid rgb(128, 129, 133)');
+                if(!$heatmapService.isToggled()) { 
+                    $('#heatmapOptions').hide();
+                    $('#heatmapToggleHeader').css('border-bottom', '1px solid rgb(128, 129, 133)');
+                }
                 
                 $('#heatmapToggle').on('change', function(){
                      if($(this).is(':checked')){
                         $('#heatmapOptions').show();
                         $('#heatmapToggleHeader').css('border-bottom', '');
+                        _.each(markers, function(marker){
+                            marker.marker.setMap(null);
+                        });
+                        _heatMap.setMap(map);
+                        e.widget.queryMetadata.heatmapSettings.toggled = true;
                      } else {
                         $('#heatmapOptions').hide();
                         $('#heatmapToggleHeader').css('border-bottom', '1px solid rgb(128, 129, 133)');
+                         _heatMap.setMap(null);
+                         _.each(markers, function(marker){
+                            marker.marker.setMap(map);
+                            e.widget.queryMetadata.heatmapSettings.toggled = false;
+                        });
                      }
+                     e.widget.changesMade();
                 })
 
                 $('#radiusInput').on('change', function(){
