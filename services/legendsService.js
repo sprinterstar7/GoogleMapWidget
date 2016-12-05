@@ -26,17 +26,18 @@ mod.service('legendsService', [
                                 ,'bar-vertical'
                              ];
 
-        var open,  colorCategory, shapeCategory, shapesMetadata, map, shapeArray, e, markers;
+        var open,  colorCategory, shapeCategory, shapesMetadata, map, shapeArray, e, markers, $heatmapService;
 
         var serviceFunctions =  { 
 
-            init: function(inColorCategory, inShapeCategory, inShapesMetadata, inMap, inE, inMarkers) { 
+            init: function(inColorCategory, inShapeCategory, inShapesMetadata, inMap, inE, inMarkers, inheatmapService) { 
                 colorCategory = inColorCategory;
                 shapeCategory = inShapeCategory;
                 shapesMetadata = inShapesMetadata;
                 map = inMap;
                 e = inE;
                 markers = inMarkers;
+                $heatmapService = inheatmapService;
                 //Map Side Bar Begin
 
                 $(map.getDiv()).append($('<div id="mapSidebar">'
@@ -84,7 +85,6 @@ mod.service('legendsService', [
                      open = null;
                     $('#mapSidebar').hide("slide", { direction: "left" }, 200);
                     $("#mapSidebarShow").show();
-                    
                 });
 
                 $('#mapSidebarShow').click(function () {
@@ -300,12 +300,21 @@ mod.service('legendsService', [
 
                  $('#mapOptionsLegendContent').append($('<div id="heatmapOptionsHeader">Heatmap Options</div>'));
 
-                 var heatMapInputOne = $('<div id="heatMapRadius"><span>Radius:</span><input id="radiusInput" type="number" name="radius" min="1" max="50" value="15"></div>');
+                 var heatMapInputOne = $('<div id="heatMapRadius"><span>Radius:</span>' +
+                    '<input id="radiusInput" type="number" name="radius" min="1" max="50" value="' + $heatmapService.getRadius() + '"></div>');
+                 var i = $heatmapService.getIntensity() == null ? 0 : $heatmapService.getIntensity();
                  var heatMapInputTwo = $('<div id="heatMapIntensity"><span>Intesity:</span>' + 
-                    '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="0"></div>');
+                    '<input id="intensityInput" type="number" name="intensity" min="0" max="1000000000" value="' + i + '"></div>');
 
                  $('#mapOptionsLegendContent').append(heatMapInputOne);
                  $('#mapOptionsLegendContent').append(heatMapInputTwo);
+
+                 $('#radiusInput').on('change', function(){
+                    $heatmapService.setRadius();
+                 });
+                 $('#intensityInput').on('change', function(){
+                    $heatmapService.setIntensity();
+                 });
             },
 
             clear: function(inColorCategory, inShapeCategory) {
