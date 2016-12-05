@@ -51,16 +51,16 @@ mod.service('legendsService', [
 
                 $('#mapSidebarContent').height($(map.getDiv()).height());
                 $('#mapSidebarContent').append($('<div id="mapSidebarHeader">'
-                    + '<span class="active" id="colorLegend">Color Legend</span>'
+                    + '<span class="active" id="colorLegend"><i class="fa fa-paint-brush" aria-hidden="true"></i>Color Legend</span>'
                     //+ '<span class="tabDivider"></span>'
-                    + '<span class="inactive" id="shapeLegend">Shape by</span>'
+                    + '<span class="inactive" id="shapeLegend"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></i>Shape by</span>'
                     + '</div>'));
                 $('#mapSidebarContent').append($('<div id="mapColorLegendContent"></div>'));
                 $('#mapSidebarContent').append($('<div id="mapShapeLegendContent"></div>'));
                 $('#mapSidebarContent').append($('<div id="mapOptionsLegendContent"></div>'));
                 //$('#mapSidebarContent').append($('<div id="mapMiscLegendContent"></div>'));
                 $('#mapSidebarContent').append($('<div id="mapSidebarFooter">'
-                    + '<span class="inactive" id="optionsLegend">Options</span>'
+                    + '<span class="inactive" id="optionsLegend"><i class="fa fa-cogs" aria-hidden="true"></i>Options</span>'
                     //+ '<span class="tabDivider"></span>'
                     //+ '<span class="inactive" id="miscLegend">To be Det.</span>'
                     + '</div>'));
@@ -80,8 +80,11 @@ mod.service('legendsService', [
                 $('#mapMiscLegendContent').hide();
 
                 $('#mapSidebarHide').click(function () {
+                    $('#shapeSelectionWindow').remove();
+                     open = null;
                     $('#mapSidebar').hide("slide", { direction: "left" }, 200);
                     $("#mapSidebarShow").show();
+                    
                 });
 
                 $('#mapSidebarShow').click(function () {
@@ -168,7 +171,7 @@ mod.service('legendsService', [
                 if(open != row) {
                     var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
                     $(map.getDiv()).append($(htmlString));
-                    $('#shapeSelectionWindow').css("top", "" + (y-125) +  "px");
+                    $('#shapeSelectionWindow').css("top", "" + (y-150) +  "px");
                     open = row;
                     _.each(availableShapes, function(shape) {
                         var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
