@@ -366,6 +366,10 @@ mod.service('legendsService', [
                     +'</th></tr>'));
                $("#mapSidebarShapeTable tbody").append($('<tr><th colspan="2">' + (shapeCategory ? shapeCategory : "No Results")
                     +'</th></tr>'));
+            },
+
+            setMarkers: function(inMarkers) { 
+                markers = inMarkers;
             }
         
         }
