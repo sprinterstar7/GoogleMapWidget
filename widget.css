@@ -81,8 +81,8 @@
     height: 50px;
     left: 300px;
     top: 50px;
-    background: rgb(182, 184, 186);
-    color: #888;
+    background: lightgrey;
+    color: rgb(100, 100, 100);
     cursor: pointer;
 }
 
@@ -103,13 +103,13 @@
 }
 
 #mapSidebarHide i {
-    margin-top: 18px;
+    margin-top: 16px;
     font-size: 20px;
     margin-left: 7px;
 }
 
 #mapSidebarShow i {
-    margin-top: 18px;
+    margin-top: 16px;
     font-size: 20px;
     margin-left: 9px;
 }
