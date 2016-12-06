@@ -26,18 +26,18 @@ mod.service('legendsService', [
                                 ,'bar-vertical'
                              ];
 
-        var open,  colorCategory, shapeCategory, shapesMetadata, map, shapeArray, e, markers, $heatmapService;
+        var open,  colorCategory, shapeCategory, shapesMetadata, map, shapeArray, e, markers;//, $heatmapService;
 
         var serviceFunctions =  { 
 
-            init: function(inColorCategory, inShapeCategory, inShapesMetadata, inMap, inE, inMarkers, inheatmapService) { 
+            init: function(inColorCategory, inShapeCategory, inShapesMetadata, inMap, inE, inMarkers) {//, inheatmapService) { 
                 colorCategory = inColorCategory;
                 shapeCategory = inShapeCategory;
                 shapesMetadata = inShapesMetadata;
                 map = inMap;
                 e = inE;
                 markers = inMarkers;
-                $heatmapService = inheatmapService;
+                //$heatmapService = inheatmapService;
                 //Map Side Bar Begin
 
                 $(map.getDiv()).append($('<div id="mapSidebar">'
@@ -275,7 +275,7 @@ mod.service('legendsService', [
             },
 
             addOptions: function() { 
-                var _heatMap = $heatmapService.getHeatmap();
+                //var _heatMap = $heatmapService.getHeatmap();
 
                  $('#mapOptionsLegendContent').append($('<div id="optionsHeader">Options</div>'));
                  $('#mapOptionsLegendContent').append($('<div id="drawingOptions">'
@@ -299,7 +299,7 @@ mod.service('legendsService', [
                      });
                  });
                  
-                 $('#mapOptionsLegendContent').append($(
+                 /*$('#mapOptionsLegendContent').append($(
                  '<div id="heatmapToggleHeader">Heatmap'
                     + '<div class="onoffswitch">'
                         + '<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="heatmapToggle" ' + ($heatmapService.isToggled() ? 'checked' : '') + '>'
@@ -353,7 +353,7 @@ mod.service('legendsService', [
                  });
                  $('#intensityInput').on('change', function(){
                     $heatmapService.setIntensity();
-                 });
+                 });*/
             },
 
             clear: function(inColorCategory, inShapeCategory) {

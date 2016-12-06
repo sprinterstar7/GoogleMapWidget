@@ -4,8 +4,8 @@ var mapupdater;
 prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsWidget.services.legendsService', 
 	'plugin-googleMapsWidget.services.kmlService', 'plugin-googleMapsWidget.services.countyService', 
 	'plugin-googleMapsWidget.services.drawingService', 'plugin-googleMapsWidget.services.staticOverlayService', 
-	'plugin-googleMapsWidget.services.heatmapService', 
-	function($helperService, $legendsService, $kmlService, $countyService, $drawingService, $staticOverlayService, $heatmapService) {
+	//'plugin-googleMapsWidget.services.heatmapService', 
+	function($helperService, $legendsService, $kmlService, $countyService, $drawingService, $staticOverlayService) {//, $heatmapService) {
 	prism.registerWidget("googleMaps", {
 
 		name : "googleMaps",
@@ -691,7 +691,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											$kmlService.init(widgetMap, google);
 											$countyService.init(widgetMap, google);
 											$drawingService.init(widgetMap, google, e);
-											$heatmapService.init(widgetMap, google, e);
+											//$heatmapService.init(widgetMap, google, e);
 											
 																					
 											
@@ -871,7 +871,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										if(!s.fromReadjust) { 
 											map.clearMarkers();
 											markers = [];
-											$heatmapService.clear();
+											//$heatmapService.clear();
 											var maxValue = 0;
 											//	Create each marker for the map
 											for (; i < dataSize; i++) {
@@ -926,10 +926,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													else { 
 														url = "/plugins/googleMapsWidget/resources/markerclusterer/images/m5.png";
 													}
-													$heatmapService.push({
+													/*$heatmapService.push({
 														location: new google.maps.LatLng(lat, lng),
 														weight: qresult[i][measureIndex]["data"]
-													});
+													});*/
 												}
 												else { 
 													//	Determine the marker color from Sisense, or use the default
@@ -951,15 +951,15 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 														}
 													}
 
-													$heatmapService.push({
+													/*$heatmapService.push({
 														location: new google.maps.LatLng(lat, lng),
 														weight: qresult[i][measureIndex]["data"]
-													});
+													});*/
 												}
 
 												// Create the marker
 												var marker = new google.maps.Marker({
-													map : $heatmapService.isToggled() ? null : map,
+													map : /*$heatmapService.isToggled() ? null :*/ map,
 													position : new google.maps.LatLng(lat, lng),
 													raiseOnDrag : false,
 													visible : true,
@@ -1015,10 +1015,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											//END for
 											map.markers = markers;
 
-											if($heatmapService.isToggled()) { 	
+											/*if($heatmapService.isToggled()) { 	
 												console.log('applied');
 												$heatmapService.apply(maxValue);
-											}
+											}*/
 											
 											$staticOverlayService.removeOverlay();
 										}
@@ -1036,7 +1036,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										});
 						
 										if ($('#mapSidebar').length < 1) 
-											$legendsService.init((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory, shapesMetadata, map, e, markers, $heatmapService);
+											$legendsService.init((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory, shapesMetadata, map, e, markers);//, $heatmapService);
 										else { 
 											$legendsService.clear((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory)
 											$legendsService.setMarkers(markers);

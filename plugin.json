@@ -8,7 +8,7 @@
 		"services/kmlService.js",
 		"services/helperService.js",
 		"services/staticOverlayService.js",
-		"services/heatmapService.js",
+		//"services/heatmapService.js",
 	  "general.js",
 		"widget.js"
 	],
