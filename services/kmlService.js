@@ -74,6 +74,7 @@ mod.service('kmlService', [
                 var control = document.createElement('div');
                 control.id = "KMLLayerButtonGroup";
                 controlDiv.appendChild(control);
+                control.setAttribute("data-html2canvas-ignore", "true")
 
                 // Set list
                 var ul = document.createElement('ul');
