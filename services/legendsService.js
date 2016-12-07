@@ -40,7 +40,7 @@ mod.service('legendsService', [
                 //$heatmapService = inheatmapService;
                 //Map Side Bar Begin
 
-                $(map.getDiv()).append($('<div id="mapSidebar">'
+                $(map.getDiv()).append($('<div id="mapSidebar" data-html2canvas-ignore="true">'
                     + '<div id="mapSidebarHide"><i class="fa fa-caret-left"></i></div>'
                     + '<div id="mapSidebarContent"></div>'
                     + '</div>'));
@@ -48,7 +48,7 @@ mod.service('legendsService', [
                 $('#mapSidebar').css('top', 0);
                 $('#mapSidebar').hide();
 
-                $(map.getDiv()).append($('<div id="mapSidebarShow" title="Map settings and legends"><i class="fa fa-caret-right"></i></div>'));
+                $(map.getDiv()).append($('<div id="mapSidebarShow" data-html2canvas-ignore="true" title="Map settings and legends"><i class="fa fa-caret-right"></i></div>'));
 
                 $('#mapSidebarContent').height($(map.getDiv()).height());
                 $('#mapSidebarContent').append($('<div id="mapSidebarHeader">'

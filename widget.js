@@ -430,7 +430,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 									$.getScript(protocol + externalPaths.maplabel, function (data, textStatus) {
 										gapi.client.setApiKey('AIzaSyBng-i-_-yfQdfS5COep3e3oV6kQOjwEuA');
 										gapi.client.load('urlshortener', 'v1', function () { });
-										
+
 										//	All 3 scripts loaded, Get the data
 										var qresult = s.queryResult.$$rows; // results
 										var headers = s.rawQueryResult.headers; // headers
@@ -696,10 +696,12 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 																					
 											
 											google.maps.event.addListenerOnce(widgetMap, 'idle', function () { // Create Widget's Refresh button
+												
+											if ($('#mapRefresh').length < 1) {
 
-												if ($('#mapRefresh').length < 1) {
+													$('.gmnoprint').attr("data-html2canvas-ignore", "true");
 
-													var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results">' +
+													var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results" data-html2canvas-ignore="true">' +
 														'<div class="update-icon"></div>' +
 														'</div>');
 
@@ -1078,13 +1080,13 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
                                                 $('#mapRefresh').show();
                                             else
                                                 boundsChangedOnce = true;
-                                        }								
+                                        }	
 										
 									});
 								});
 							});
 						});
-					});
+					});				
 			}
 			if(typeof google != "undefined"){
 				// first call to onGoogleMapLoaded is done when google maps loaded once loaded, render will call onGoogleMapLoaded - its done to avoid multiple invocation of onGoogleMapLoaded
