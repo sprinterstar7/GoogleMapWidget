@@ -233,12 +233,45 @@
 
 /* Shape Selection */
 
-#mapSidebarShapeTable th {
+#shapeTableHeader {
+    line-height: 10px;
+}
+
+#thNoPadding { 
+    text-align: left;
+    font-size: 20px;
+}
+
+#shapeReset { 
+    background-color: rgb(0, 160, 220);
+    color: rgb(255, 255, 255);
+    width: 80px;
+    height: 30px;
+    border: 1px solid rgb(0, 117, 160);
+}
+
+#shapeReset:active { 
+    background-color: rgb(0, 117, 160);
+}
+
+
+#shapeRandom { 
+    background-color: rgb(114, 191, 68);
+    color: rgb(255, 255, 255);
+    width: 80px;
+    height: 30px;
+    border: 1px solid rgb(94, 155, 55);
+}
+
+#shapeRandom:active { 
+    background-color: rgb(94, 155, 55);
+}
+
+#mapSidebarShapeTable th:not(#thNoPadding) {
     text-align: left;
     font-size: 20px;
     padding-left: 5px;
 }
-
 
 #mapSidebarShapeTable tr {
     border-bottom: 1px solid rgb(128, 129, 133);
@@ -249,20 +282,19 @@
     padding-bottom: 5px;
 }
 
-#mapSidebarShapeTable th {
-    text-align: left;
-    font-size: 20px;
-    padding-left: 5px;
-}
-
-.shapeLegendRow { 
-    
-}
-
 .shapeLegendDescription { 
     min-width: 200px;
     font-size: 16px;
     padding-left: 5px;
+}
+
+.shapeButtonTd { 
+    text-align: center;
+}
+
+.shapeButtonTd button { 
+    margin-left: 20px;
+    margin-right: 20px;
 }
 
 .shapeLegendImg { 
