@@ -680,7 +680,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										colorArray = _.compact(colorArray);
 
 										var shapeArray = _.map(qresult, function(item){
-											return item[4] && item[4].data ? item[4].data : null;
+											return item[4] && item[4].data ? item[4].data : (item[3] && !item[3].color && item[3].data ? item[3].data : null) ;
 										});
 										shapeArray = _.uniq(shapeArray);
 										shapeArray = shapeArray.sort();
@@ -786,13 +786,21 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													//	Determine the marker color from Sisense, or use the default
 													if ((headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].color)) {
 														pinColor = qresult[i][3].color;//.replace("#","");
-														if ( colors[pinColor] === undefined )
+														if ( colors[pinColor] === undefined && !shapeCategory )
 															colors[pinColor] = createMarker(10, pinColor);
 													}
 
-													if(shapeCategory && savedShapesCategory && ((headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data))) {
+													var shapeData = (shapeCategory && (headersSize >= 4) && (qresult[i][4]) && (qresult[i][4].data)) 
+																		? qresult[i][4].data
+																		: (shapeCategory && (headersSize >= 3) && (qresult[i][3]) && (qresult[i][3].data) && !(qresult[i][3].color)) 
+																			? qresult[i][3].data
+																			: null;
+
+													var hasSavedShape = shapeData && savedShapesCategory
+
+													if(hasSavedShape) {
 														var item = _.find(savedShapesCategory.items, function(item) {
-															return item.value == qresult[i][4].data;
+															return item.value == shapeData;
 														});
 														if(item) {
 															shape = item.shape;
@@ -833,29 +841,29 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												markers.push({
 													marker : marker,
 													color: pinColor,
-													shape : (qresult[i][4] && qresult[i][4].data) ? qresult[i][4].data : null
+													shape : shapeData
 												});
 
-												if(shapeCategory && savedShapesCategory && qresult[i][4] && qresult[i][4].data) {
+												if(hasSavedShape) {
 													var item = _.find(savedShapesCategory.items, function(item){
-														return item.value == qresult[i][4].data;
+														return item.value == shapeData;
 													});
 													if(item) {
 														item.shape = shape;
 													}
 													else {
 														savedShapesCategory.items.push({
-															value : qresult[i][4].data,
-															shape: shape
+															value : shapeData,
+															shape : shape
 														})
 													}
 												}
-												else if (shapeCategory && qresult[i][4] && qresult[i][4].data) {
+												else if (shapeData) {
 													var cat = {
 														column : shapeCategory,
 														items : [{
-															value : qresult[i][4].data,
-															shape: shape
+															value : shapeData,
+															shape : shape
 														}]
 													}
 													shapesMetadata = [];
