@@ -38,7 +38,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 					metadata : {
 
 						types : ['dimensions'],
-						maxitems : -1
+						maxitems : -1	
 					}
 				},
 				{//measure panel
@@ -137,8 +137,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 				var a = prism.$jaql.analyze(items);
 
 				// require at least 2 dimensions of lat and lng and 1 measure
+				//if (/*a.dimensions.length >= 2 && */a.measures.length == 1) {
 				if (a.dimensions.length >= 2 && a.measures.length == 1) {
-
 					return 0;
 				}
 				return -1;
@@ -148,6 +148,17 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 			populateMetadata : function (widget, items) {
 
 				var a = prism.$jaql.analyze(items);
+
+				/*if (a.dimensions.length < 2) {
+					a.dimensions = [];
+					a.dimensions.push({
+							"jaql": {"table":"Well","column":"GeocodeLt0","dim":"[Well.GeocodeLt0]","datatype":"numeric","title":"GeocodeLt0"}
+						});
+					a.dimensions.push({
+							"jaql": {"table":"Well","column":"GeocodeLg0","dim":"[Well.GeocodeLg0]","datatype":"numeric","title":"GeocodeLg0"}
+						}
+					);
+				}*/
 
 				// allocating dimensions
 				widget.metadata.panel("latlng").push(a.dimensions);
