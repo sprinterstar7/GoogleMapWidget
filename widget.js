@@ -162,7 +162,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 			buildQuery : function (widget) {
 
 				if(widget.fromReadjust) { 
-					return widget.rawQueryResult;
+					return widget.queryResult;
 				}
 				else { 
 					var query = {
@@ -170,7 +170,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 						metadata : []
 					};
 
-					query.count = 25000;//0;
+					query.count = 15000;//0;
 					query.offset = 0;
 
 					var countQuery = {
