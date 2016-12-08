@@ -69,7 +69,21 @@ mod.service('legendsService', [
                 $('#mapColorLegendContent').append($('<table id="mapSidebarColorTable"><tbody><tr><th colspan="2">' 
                     + (colorCategory ? colorCategory : "No Results") + '</th></tr></tbody></table>'));
                 $('#mapShapeLegendContent').append($('<table id="mapSidebarShapeTable"><tbody><tr><th colspan="2">'
-                    + (shapeCategory ? shapeCategory : "No Results") + '</th></tr></tbody></table>'));
+                    + (shapeCategory ? shapeCategory : "No Results") + '</th></tr>'
+                    + '<tr>'
+                        + '<td class="shapeButtonTd" colspan="2">'
+                            + '<button id="shapeReset"><i class="fa fa-eraser"></i> Reset</button>'
+                            + '<button id="shapeRandom"><i class="fa fa-random"></i> Random</button>'
+                        + '</td>'
+                   + ' </tr></tbody></table>'));
+
+                $('#shapeReset').on('click', function(){
+                    serviceFunctions.resetAllShapes();
+                });
+
+                $('#shapeRandom').on('click', function(){
+                    serviceFunctions.randomizeShapes();
+                });
 
                 $('#mapColorLegendContent').height($(map.getDiv()).height() - 120);
                 $('#mapShapeLegendContent').height($(map.getDiv()).height() - 120);
@@ -274,6 +288,119 @@ mod.service('legendsService', [
                 return availableShapes[_.random((availableShapes.length - 1))];
             },
 
+            resetAllShapes: function() { 
+                var shape = "circle";
+                _.each(shapeArray, function(data){
+                    var selector;
+                    if (typeof data === 'string' || data instanceof String) {
+                        selector = data.replace(/\W/g, '');
+                    }
+                    else { 
+                        selector = row;
+                    }
+                    
+                    _.each(markers, function(marker){
+                        if(marker.shape === data) {
+                            marker.marker.icon =
+                            {
+                                url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + marker.color.replace('#', ''),
+                                anchor: new google.maps.Point(10, 10)
+                            };
+                            if ( marker.marker.getMap() ) {
+                                marker.marker.setMap(null);
+                                marker.marker.setMap(map);
+                            }
+                        }
+                    });
+                    $('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '/plugins/googleMapsWidget/resources/shapes/'+shape+'.png');
+                    var shapeMetadataColumn = _.find(shapesMetadata, function(category){
+                        return category.column == shapeCategory;
+                    });
+                    if(shapeMetadataColumn) {
+                        var item = _.find(shapeMetadataColumn.items, function(item){
+                            return item.value == data;
+                        });
+                        if(item && item.shape) {
+                            item.shape = shape;
+                        }
+                        else {
+                            shapeMetadataColumn.items.push({
+                                value : data,
+                                shape: shape
+                            })
+                        }
+                    }
+                    else {
+                        shapesMetadata.push({
+                            column : shapeCategory,
+                            items : [{
+                                value : data,
+                                shape: shape
+                            }]
+                        })
+                    }
+                });
+                e.widget.queryMetadata.savedShapes = shapesMetadata;
+                e.widget.changesMade();
+            },
+
+            randomizeShapes: function() { 
+                
+                _.each(shapeArray, function(data){
+                    var selector;
+                    var shape = serviceFunctions.getRandomShape();
+                    if (typeof data === 'string' || data instanceof String) {
+                        selector = data.replace(/\W/g, '');
+                    }
+                    else { 
+                        selector = row;
+                    }
+                    
+                    _.each(markers, function(marker){
+                        if(marker.shape === data) {
+                            marker.marker.icon =
+                            {
+                                url: "/ColoredShapeHandler.ashx?shape=" + shape + "&color=FF" + marker.color.replace('#', ''),
+                                anchor: new google.maps.Point(10, 10)
+                            };
+                            if ( marker.marker.getMap() ) {
+                                marker.marker.setMap(null);
+                                marker.marker.setMap(map);
+                            }
+                        }
+                    });
+                    $('#shapeRow'+selector+' td.shapeLegendImg img').attr('src', '/plugins/googleMapsWidget/resources/shapes/'+shape+'.png');
+                    var shapeMetadataColumn = _.find(shapesMetadata, function(category){
+                        return category.column == shapeCategory;
+                    });
+                    if(shapeMetadataColumn) {
+                        var item = _.find(shapeMetadataColumn.items, function(item){
+                            return item.value == data;
+                        });
+                        if(item && item.shape) {
+                            item.shape = shape;
+                        }
+                        else {
+                            shapeMetadataColumn.items.push({
+                                value : data,
+                                shape: shape
+                            })
+                        }
+                    }
+                    else {
+                        shapesMetadata.push({
+                            column : shapeCategory,
+                            items : [{
+                                value : data,
+                                shape: shape
+                            }]
+                        })
+                    }
+                });
+                e.widget.queryMetadata.savedShapes = shapesMetadata;
+                e.widget.changesMade();
+            },
+
             addOptions: function() { 
                 //var _heatMap = $heatmapService.getHeatmap();
 
@@ -359,13 +486,27 @@ mod.service('legendsService', [
             clear: function(inColorCategory, inShapeCategory) {
                 colorCategory = inColorCategory;
                 shapeCategory = inShapeCategory;
-               $("#mapSidebarColorTable tr").remove(); 
-               $("#mapSidebarShapeTable tr").remove(); 
+                $("#mapSidebarColorTable tr").remove(); 
+                $("#mapSidebarShapeTable tr").remove(); 
 
-               $("#mapSidebarColorTable tbody").append($('<tr><th colspan="2">' + (colorCategory ? colorCategory : "No Results")
+                $("#mapSidebarColorTable tbody").append($('<tr><th colspan="2">' + (colorCategory ? colorCategory : "No Results")
                     +'</th></tr>'));
-               $("#mapSidebarShapeTable tbody").append($('<tr><th colspan="2">' + (shapeCategory ? shapeCategory : "No Results")
-                    +'</th></tr>'));
+                $("#mapSidebarShapeTable tbody").append($('<tr><th colspan="2">'
+                    + (shapeCategory ? shapeCategory : "No Results") + '</th>'
+                    + '</tr><tr>'
+                        + '<td class="shapeButtonTd" colspan="2">'
+                            + '<button id="shapeReset"><i class="fa fa-eraser"></i> Reset</button>'
+                            + '<button id="shapeRandom"><i class="fa fa-random"></i> Random</button>'
+                        + '</td></tr>'));
+
+                $('#shapeReset').on('click', function(){
+                    serviceFunctions.resetAllShapes();
+                });            
+
+                $('#shapeRandom').on('click', function(){
+                    serviceFunctions.randomizeShapes();
+                });
+   
             },
 
             setMarkers: function(inMarkers) { 
