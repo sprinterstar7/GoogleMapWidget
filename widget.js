@@ -886,6 +886,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											markers = [];
 											//$heatmapService.clear();
 											var maxValue = 0;
+											var isCluster = headers[0].includes("Geocode");
 											//	Create each marker for the map
 											for (; i < dataSize; i++) {
 
@@ -917,7 +918,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 													clusterLabel = headers[measureIndex];
 												}
 
-												var isCluster = (qresult[i][3] && !qresult[i][3].color && qresult[i][3].data);
 												var url;
 												var pinColor = '#00A0DC';
 												var shape = "circle";
