@@ -3,6 +3,7 @@
 	"source" : [
 		"external/client.js", //https://apis.google.com/js/client.js
 		"services/countyService.js",
+		"services/mapStyleService.js",
 		"services/drawingService.js",
 		"services/legendsService.js",
 		"services/kmlService.js",
