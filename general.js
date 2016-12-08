@@ -3,6 +3,9 @@ var maps;
 prism.run([function(){
     prism.on("dashboardloaded",function(e,args){
         maps = [];
+        args.dashboard.on("filterschanged",function(e,args){
+            $('#mapRefresh').hide();
+        });
     });
 }]);
 
