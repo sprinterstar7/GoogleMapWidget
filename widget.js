@@ -549,8 +549,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												
 											if ($('#mapRefresh').length < 1) {
 
-													$('.gmnoprint').attr("data-html2canvas-ignore", "true");
-
 													var mapRefreshButton = $('<div id="mapRefresh" title="Refresh Results" data-html2canvas-ignore="true">' +
 														'<div class="update-icon"></div>' +
 														'</div>');
@@ -646,6 +644,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												}
 											});
 
+											$('.gmnoprint').attr("data-html2canvas-ignore", "true");
 											$drawingService.drawShapesFromMetaData(overlays);
 
 										}
