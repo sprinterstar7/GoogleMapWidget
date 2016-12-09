@@ -39,9 +39,10 @@ mod.service('staticOverlayService', [
             },
 
             readjustOverlay: function() { 
+                google.maps.event.trigger(map, 'resize');	
                 $('#mapOverlay').height($(map.getDiv()).height());
                 $('#mapOverlay').width($(map.getDiv()).width());
-                $('.gmnoprint').attr("data-html2canvas-ignore", "true");
+                //$('.gmnoprint').attr("data-html2canvas-ignore", "true");
             }
         
         }

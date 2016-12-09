@@ -649,7 +649,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												}
 											});
 
-											$('.gmnoprint').attr("data-html2canvas-ignore", "true");
 											$drawingService.drawShapesFromMetaData(overlays);
 
 										}
@@ -912,6 +911,10 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										else { 
 											$legendsService.addRowsToColorLegend(colorArray);
 										}
+
+										$(map.getDiv()).on('DOMNodeInserted', 'div.gmnoprint', function () {
+												$('.gmnoprint').attr("data-html2canvas-ignore", "true");
+										});
 
 										function setMapTimer() {
 											clearTimeout(mapupdater);
