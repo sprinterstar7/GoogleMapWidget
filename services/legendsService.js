@@ -224,6 +224,9 @@ mod.service('legendsService', [
                     if (typeof row === 'string' || row instanceof String) {
                         rowId = row.replace(/\W/g, '');
                     }
+                    else if($.isNumeric(row)) { 
+                        rowId = row.toString().replace(/\W/g, '');
+                    }
                     else { 
                         rowId = row;
                     }
@@ -295,6 +298,9 @@ mod.service('legendsService', [
                     if (typeof data === 'string' || data instanceof String) {
                         selector = data.replace(/\W/g, '');
                     }
+                    else if($.isNumeric(data)) { 
+                        selector = data.toString().replace(/\W/g, '');
+                    }
                     else { 
                         selector = row;
                     }
@@ -351,6 +357,9 @@ mod.service('legendsService', [
                     var shape = serviceFunctions.getRandomShape();
                     if (typeof data === 'string' || data instanceof String) {
                         selector = data.replace(/\W/g, '');
+                    }
+                    else if($.isNumeric(data)) { 
+                        selector = data.toString().replace(/\W/g, '');
                     }
                     else { 
                         selector = row;

@@ -202,7 +202,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 								}
 							},
 
-							"title": "Id Count"
+							"title": "Well Count"
 						}
 					});
 					var i = 0;
@@ -357,7 +357,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 												"datatype": "numeric"
 											}
 											},
-											"title": "Id Count"
+											"title": "Well Count"
 										}
 									});
 								}
@@ -544,7 +544,11 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											$kmlService.init(widgetMap, google);
 											$countyService.init(widgetMap, google);
 											$drawingService.init(widgetMap, google, e);
-											//$heatmapService.init(widgetMap, google, e);																														
+											//$heatmapService.init(widgetMap, google, e);						
+
+											google.maps.event.addListener(widgetMap, 'maptypeid_changed', function(e) { 
+												$drawingService.changeRulerColor(widgetMap.getMapTypeId());
+											});																							
 											
 											google.maps.event.addListenerOnce(widgetMap, 'idle', function () { // Create Widget's Refresh button
 												
@@ -805,9 +809,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 														if(item) {
 															shape = item.shape;
 														}
-														else { 
-															shape = $legendsService.getRandomShape();
-														}
 													}
 
 													/*$heatmapService.push({
@@ -895,9 +896,9 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										});
 						
 										if ($('#mapSidebar').length < 1) 
-											$legendsService.init((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory, shapesMetadata, map, e, markers);//, $heatmapService);
+											$legendsService.init((!colorArray || colorArray.length == 0) ? "Well Count" : colorCategory, shapeCategory, shapesMetadata, map, e, markers);//, $heatmapService);
 										else { 
-											$legendsService.clear((!colorArray || colorArray.length == 0) ? "Cluster Legend" : colorCategory, shapeCategory)
+											$legendsService.clear((!colorArray || colorArray.length == 0) ? "Well Count" : colorCategory, shapeCategory)
 											$legendsService.setMarkers(markers);
 										}
 

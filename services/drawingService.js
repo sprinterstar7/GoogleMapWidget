@@ -6,7 +6,8 @@ mod.service('drawingService', [
 
         //Define your private variables
         var overlays = [], _drawManager, 
-        widgetMap, google, map, e;
+        widgetMap, google, map, e,
+        polylines = [];
 
         //Define an object of functions to return
         var serviceFunctions =  { 
@@ -51,12 +52,12 @@ mod.service('drawingService', [
                         suppressUndo: true
                     },
                     polylineOptions: {
-                        fillColor: '#dddddd',
+                        fillColor: '#000000',
                         fillOpacity: 0.5,
                         strokeWeight: 3,
-                        strokeColor: '#cccccc',
+                        strokeColor: '#000000',
                         clickable: true,
-                        editable: false,
+                        editable: true,
                         draggable: true,
                         suppressUndo: true
                     }
@@ -103,6 +104,7 @@ mod.service('drawingService', [
                                 radius: event.overlay.radius,
                                 center: { lat: event.overlay.center.lat(), lng: event.overlay.center.lng() }
                             }
+                            
                         }
                         else if(event.type == google.maps.drawing.OverlayType.POLYGON) {
                             overlay = {
@@ -116,6 +118,31 @@ mod.service('drawingService', [
                     }
                     else if(event.type == google.maps.drawing.OverlayType.POLYLINE) {   
                         event.overlay.distance = google.maps.geometry.spherical.computeLength(event.overlay.getPath().getArray());
+
+                        google.maps.event.addListener(event.overlay, 'dragend', function () {
+                            event.overlay.recalculateDistance();
+                        });
+
+                        event.overlay.recalculateDistance = function () {
+                            event.overlay.distance = google.maps.geometry.spherical.computeLength(event.overlay.getPath().getArray());
+                            if(event.overlay.infoWindow) { 
+                                var distance = event.overlay.distance;
+                                var value = $('#rulerOptions').val();
+                                var uom = $("#rulerOptions option[value='"+value+"']").text();
+                                var span = $(event.overlay.infoWindow.content)[0].children[0];
+                                var infoWindowContent = '<div class="rulerDistance"><span data-distance="'+event.overlay.distance+'">'+ 'Distance: ' + Math.trunc((distance / value)) + " " + uom;+'</span><\/div>';
+                                event.overlay.infoWindow.close();
+                                var infoWindowOptions = {
+                                    content: infoWindowContent
+                                };
+                                event.overlay.infoWindow = new google.maps.InfoWindow(infoWindowOptions);
+                                event.overlay.infoWindow.open(map, event.overlay);
+                                event.overlay.infoWindow.setPosition(event.overlay.latLngs.b[0].b[0]);
+                            }
+                        };
+
+                        google.maps.event.addListener(event.overlay.getPath(), 'insert_at', event.overlay.recalculateDistance);
+                        event.overlay.setAtListener = google.maps.event.addListener(event.overlay.getPath(), 'set_at', event.overlay.recalculateDistance);
 
                         event.overlay.addListener('click', function () {           
                             if(event.overlay.infoWindow){
@@ -135,7 +162,7 @@ mod.service('drawingService', [
                                 event.overlay.infoWindow.setPosition(event.overlay.latLngs.b[0].b[0]);
                             }
                         });
-                        
+                        polylines.push(event);      
                     }
 
                     if (shoulsUpdatefilters){
@@ -145,6 +172,7 @@ mod.service('drawingService', [
                     event.overlay.addListener('rightclick', function () {
                         serviceFunctions.eraseShape(event);
                     });
+
                 });
             },
 
@@ -296,6 +324,11 @@ mod.service('drawingService', [
                                 && overlay.latLngs == path;
                         });
                         break;
+
+                    case 'polyline':
+                        polylines = _.reject(polylines, function(polyline){
+                            return polyline.overlay.map == null;
+                        });
                 }
 
                 e.widget.queryMetadata.overlays = overlays;
@@ -477,6 +510,29 @@ mod.service('drawingService', [
                         && JSON.stringify(filter.and[0]) ==  JSON.stringify(latItem)
                         && JSON.stringify(filter.and[1]) ==  JSON.stringify(lngItem);
                 });
+            },
+
+            changeRulerColor : function(mapTypeId) { 
+                var fillColor;
+                var strokeColor;
+                if(mapTypeId === "dark") { 
+                    fillColor = "#dddddd";
+                    strokeColor = "#dddddd";
+                }
+                else { 
+                    fillColor = "#000000";
+                    strokeColor = "#000000";
+                }
+                _drawManager.polylineOptions.fillColor = fillColor;
+                _drawManager.polylineOptions.strokeColor = strokeColor;
+                _.each(polylines, function(polyline) {
+                    if(polyline.overlay.map) { 
+                        polyline.overlay.fillColor = fillColor;
+                        polyline.overlay.strokeColor = strokeColor;
+                        polyline.overlay.setMap(null);
+                        polyline.overlay.setMap(map);
+                    }
+                })
             }
 
         }
