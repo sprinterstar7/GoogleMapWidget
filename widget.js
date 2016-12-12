@@ -941,6 +941,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
                                                 $('#mapRefresh').show();
                                             else
                                                 boundsChangedOnce = true;
+
+											e.widget.changesMade();
                                         }	
 										
 									});
