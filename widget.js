@@ -727,7 +727,7 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											markers = [];
 											//$heatmapService.clear();
 											var maxValue = 0;
-											var isCluster = headers[0].includes("Geocode");
+											var isCluster = headers[0].indexOf("Geocode") > -1;
 											//	Create each marker for the map
 											for (; i < dataSize; i++) {
 
