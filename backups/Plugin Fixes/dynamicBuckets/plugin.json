@@ -1,0 +1,9 @@
+{
+	name: "DynamicBuckets",
+	source: [
+	  "DynamicBuckets.js"
+	],
+
+	style: [
+	]
+}
