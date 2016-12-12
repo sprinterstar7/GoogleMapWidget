@@ -14,11 +14,10 @@ function getWidgetMap(widgetOid){
         return maps[widgetOid];
     }
 }
-
 function setWidgetMap(widgetOid,map){
     if (!maps){
         maps = {
-            [widgetOid]: map
+            widgetOid : map
         };
     } else {
         maps[widgetOid] = map;
