@@ -245,7 +245,7 @@
 #shapeReset { 
     background-color: rgb(0, 160, 220);
     color: rgb(255, 255, 255);
-    width: 80px;
+    width: 90px;
     height: 30px;
     border: 1px solid rgb(0, 117, 160);
 }
@@ -258,7 +258,7 @@
 #shapeRandom { 
     background-color: rgb(114, 191, 68);
     color: rgb(255, 255, 255);
-    width: 80px;
+    width: 90px;
     height: 30px;
     border: 1px solid rgb(94, 155, 55);
 }
