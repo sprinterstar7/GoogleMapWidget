@@ -181,11 +181,12 @@ mod.service('legendsService', [
             },
             
             openShapeSelection: function(row, selector, y) {
+                var offSety = $(map.getDiv()).offset().top
                 $('#shapeSelectionWindow').remove();
                 if(open != row) {
                     var htmlString = '<div id="shapeSelectionWindow"><div class="k-content" id="shapeSelectionContent"></div></div>'
                     $(map.getDiv()).append($(htmlString));
-                    $('#shapeSelectionWindow').css("top", "" + (y-150) +  "px");
+                    $('#shapeSelectionWindow').css("top", "" + (y-offSety-15) +  "px");
                     open = row;
                     _.each(availableShapes, function(shape) {
                         var shapeString = '<div class="shapeSelectionRow" id="'+shape+'">'
