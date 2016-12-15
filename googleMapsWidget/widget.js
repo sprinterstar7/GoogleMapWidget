@@ -670,25 +670,32 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 										var shapesMetadata = [];
 										var savedShapesCategory;
 
-										var colorArray = _.map(qresult, function(item){
-											return item[3] && item[3].data && item[3].color? { value: item[3].text, color: item[3].color , selector: item[3].text.replace(/\W/g, '')} : null;
-										});
-										colorArray = _.uniq(colorArray, function(item) {
-											return JSON.stringify(item);
-										});
-										if (colorArray[0]) 
-											colorArray = _.sortBy(colorArray, function(item) {
-												 return (item !== null) ? item.value.toUpperCase() : null;
+										
+			
+										var isCluster = headers[0].indexOf("Geocode") > -1;
+										var shapeArray = [];
+										var colorArray = [];
+										if(!isCluster) { 
+											shapeArray = _.map(qresult, function(item){
+												return item[4] && item[4].data ? item[4].data : (item[3] && !item[3].color && item[3].data ? item[3].data : null) ;
 											});
-										colorArray = _.compact(colorArray);
-
-										var shapeArray = _.map(qresult, function(item){
-											return item[4] && item[4].data ? item[4].data : (item[3] && !item[3].color && item[3].data ? item[3].data : null) ;
-										});
-										shapeArray = _.uniq(shapeArray);
-										shapeArray = shapeArray.sort();
-										shapeArray = _.compact(shapeArray);
-
+											colorArray = _.map(qresult, function(item){
+												return item[3] && item[3].data && item[3].color? { value: item[3].text, color: item[3].color , selector: item[3].text.replace(/\W/g, '')} : null;
+											});
+											colorArray = _.uniq(colorArray, function(item) {
+												return JSON.stringify(item);
+											});
+											if (colorArray[0]) {
+												colorArray = _.sortBy(colorArray, function(item) {
+													return (item !== null) ? item.value.toUpperCase() : null;
+												});
+											}
+											colorArray = _.compact(colorArray);
+											shapeArray = _.uniq(shapeArray);
+											shapeArray = shapeArray.sort();
+											shapeArray = _.compact(shapeArray);
+										}
+										
 										google.maps.Map.prototype.getMarkers = function() {
 											return this.markers;
 										};
@@ -727,7 +734,6 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 											markers = [];
 											//$heatmapService.clear();
 											var maxValue = 0;
-											var isCluster = headers[0].indexOf("Geocode") > -1;
 											//	Create each marker for the map
 											for (; i < dataSize; i++) {
 
