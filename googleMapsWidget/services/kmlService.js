@@ -262,10 +262,11 @@ mod.service('kmlService', [
                         else { 
                             longUrl = protocol + "://" +  location.host + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
                         } 
+                        longUrl = longUrl.replace("dashboards", "analytics");
                         var request = gapi.client.urlshortener.url.insert({
-                            'resource': {
-                                'longUrl': longUrl
-                            }
+                           'resource': {
+                               'longUrl': longUrl
+                           }
                         });
                         request.execute(function(response)
                         {
