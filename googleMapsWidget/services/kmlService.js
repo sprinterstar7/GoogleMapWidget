@@ -255,7 +255,13 @@ mod.service('kmlService', [
                 }).done(function (data) {
                     if (data.success) {
                         // Use for the KML in Sisense
-                        var longUrl = protocol + "://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+                        var longUrl;
+                        if(location.host.indexOf(":") > -1) { 
+                           longUrl = protocol + "://" + location.host.substring(0, location.host.length - 5) + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+                        }
+                        else { 
+                            longUrl = protocol + "://" +  location.host + "/Explorer/ReturnKmlLayer?token=" +  encodeURIComponent(data.token);
+                        } 
                         var request = gapi.client.urlshortener.url.insert({
                             'resource': {
                                 'longUrl': longUrl
