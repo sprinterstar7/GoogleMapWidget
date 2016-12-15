@@ -264,9 +264,9 @@ mod.service('kmlService', [
                         } 
                         longUrl = longUrl.replace("dashboards", "analytics");
                         var request = gapi.client.urlshortener.url.insert({
-                            'resource': {
-                                'longUrl': longUrl
-                            }
+                           'resource': {
+                               'longUrl': longUrl
+                           }
                         });
                         request.execute(function(response)
                         {
