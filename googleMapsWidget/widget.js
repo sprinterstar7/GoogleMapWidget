@@ -541,8 +541,8 @@ prism.run(['plugin-googleMapsWidget.services.helperService', 'plugin-googleMapsW
 
 											google.maps.event.addListener(widgetMap, 'bounds_changed', setMapTimer);
 
-											$kmlService.init(widgetMap, google);
-											$countyService.init(widgetMap, google);
+											$kmlService.init(widgetMap, google, protocol);
+											$countyService.init(widgetMap, google, protocol);
 											$drawingService.init(widgetMap, google, e);
 											//$heatmapService.init(widgetMap, google, e);						
 
