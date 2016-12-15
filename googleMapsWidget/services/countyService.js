@@ -7,7 +7,7 @@ mod.service('countyService', [
         //Define your private variables
         var countyLabels = [], 
         widgetMap, google, map,
-        _countyListener = null,
+        _countyListener = null, protocol,
         countyLabels, countyLayer;
 
         //Define an object of functions to return
@@ -15,9 +15,10 @@ mod.service('countyService', [
 
             //Let's try to keep a convention of running any startup script, variable population, etc... 
             //in an init function.  
-            init: function(inWidgetMap, inGoogle) { 
+            init: function(inWidgetMap, inGoogle, inProtocol) { 
                 map = widgetMap = inWidgetMap,
                 google = inGoogle; 
+                protocol = inProtocol;
 
                 google.load('visualization', '1.0',
                 {
@@ -89,7 +90,7 @@ mod.service('countyService', [
                     var tableId = "1xdysxZ94uUFIit9eXmnw1fYc6VcQiXhceFd_CVKa";
                     var queryStr = "SELECT 'State-County', geometry FROM " + tableId + " OFFSET " + (i * 500) + " LIMIT 500";
                     var queryText = encodeURIComponent(queryStr);
-                    var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + queryText);
+                    var query = new google.visualization.Query(protocol + '://www.google.com/fusiontables/gvizdata?tq=' + queryText);
                     query.send(serviceFunctions.displayCountyText);
                 }
 
